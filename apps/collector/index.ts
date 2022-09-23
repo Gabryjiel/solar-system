@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { createPool } from 'mysql2/promise';
 import 'dotenv/config'
-import type { Database, Measurement, Row } from '../../types';
+import type { Database, Measurement, Row } from '../../shared/types';
 import { Kysely, MysqlDialect } from 'kysely';
 
 let interval: NodeJS.Timer;
