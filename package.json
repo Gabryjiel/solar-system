@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:collector": "tsc ./apps/collector/index.ts"
+    "build:collector": "tsc ./apps/collector/index.ts",
+    "dev:site": "cd apps/site && npm run dev"
   },
   "keywords": [],
   "author": "",
