@@ -1,16 +1,19 @@
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "ecmaFeatures": {
+      "jsx": true
+    }
   },
   "plugins": [
     "react",
     "react-hooks"
   ],
   "extends": [
-    "../../.eslintrc.json",
     "next/core-web-vitals",
     "plugin:react/recommended",
-    "plugin:react-hooks/recommended"
+    "plugin:react-hooks/recommended",
+    "plugin:react/jsx-runtime"
   ]
 }
