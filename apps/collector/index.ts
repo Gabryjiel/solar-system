@@ -1,44 +1,18 @@
 import axios from 'axios';
-import { MySQL2Extended } from 'mysql2-extended';
-import { createPool, Pool } from 'mysql2/promise';
+import { createPool } from 'mysql2/promise';
 import 'dotenv/config'
-
-type Record = {
-  '': undefined
-  webdata_sn: string;
-  webdata_msvn: string;
-  webdata_ssvn: string;
-  webdata_pv_type: string;
-  webdata_rate_p: string;
-  webdata_now_p: string;
-  webdata_today_e: string;
-  webdata_total_e: string;
-  webdata_alarm: string;
-  webdata_utime: string;
-  cover_mid: string;
-  cover_ver: string;
-  cover_wmode: string;
-  cover_ap_ssid: string;
-  cover_ap_ip: string
-  cover_ap_mac: string;
-  cover_sta_ssid: string;
-  cover_sta_rssi: string;
-  cover_sta_ip: string;
-  cover_sta_mac: string;
-  status_a: string;
-  status_b: string;
-  status_c: string;
-};
-
-type PreparedRecord = Awaited<ReturnType<typeof getRow>>;
+import type { Database, Measurement, Row } from '../../types';
+import { Kysely, MysqlDialect } from 'kysely';
 
 let interval: NodeJS.Timer;
-let pool: Pool;
-let db: MySQL2Extended;
+let db: Kysely<Database>;
 
 (async () => {
-  pool = createPool({uri: process.env.DATABASE_URL});
-  db = new MySQL2Extended(pool);
+  db = new Kysely<Database>({
+    dialect: new MysqlDialect({
+      pool: createPool({ uri: process.env.DATABASE_URL })
+    })
+  });
 
   interval = setInterval(async () => {
     try {
@@ -51,7 +25,7 @@ let db: MySQL2Extended;
 })();
 
 process.on('exit', async () => {
-  await pool.end();
+  await db.destroy();
   clearInterval(interval);
 })
 
@@ -74,7 +48,7 @@ async function getRow() {
     .map((item) => item.split('='))
     .map((item) => item.map((i) => i.replace('var', '').replace(/\"/g, '').replace(';', '').trim()))
 
-  const record: Record = Object.fromEntries(data);
+  const record: Measurement = Object.fromEntries(data);
 
   return {
     power_now: Number(record.webdata_now_p),
@@ -87,6 +61,6 @@ async function getRow() {
   }
 }
 
-async function insertRow(row: PreparedRecord) {
-  db.insert<PreparedRecord>('logs', row);
+async function insertRow(row: Row) {
+  return db.insertInto('logs').values(row).execute();
 }

@@ -2,20 +2,7 @@ import Fastify from 'fastify';
 import { createPool } from 'mysql2';
 import 'dotenv/config';
 import { Kysely, MysqlDialect } from 'kysely';
-
-interface Row {
-  power_now: number | null;
-  energy_today: number | null;
-  energy_total: number | null;
-  alarm: string |null;
-  utime: number | null;
-  cover_sta_rssi: string | null;
-  timestamp: Date;
-};
-
-interface Database {
-  logs: Row;
-}
+import type { Database } from '../../types';
 
 const db = new Kysely<Database>({
   dialect: new MysqlDialect({
