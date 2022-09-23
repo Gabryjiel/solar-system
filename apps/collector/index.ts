@@ -1,8 +1,10 @@
-import axios from 'axios';
-import { createPool } from 'mysql2/promise';
-import 'dotenv/config'
-import type { Database, Measurement, Row } from '../../shared/types';
-import { Kysely, MysqlDialect } from 'kysely';
+import "dotenv/config";
+
+import axios from "axios";
+import { Kysely, MysqlDialect } from "kysely";
+import { createPool } from "mysql2/promise";
+
+import type { Database, Measurement, Row } from "../../shared/types";
 
 let interval: NodeJS.Timer;
 let db: Kysely<Database>;
@@ -10,8 +12,8 @@ let db: Kysely<Database>;
 (async () => {
   db = new Kysely<Database>({
     dialect: new MysqlDialect({
-      pool: createPool({ uri: process.env.DATABASE_URL })
-    })
+      pool: createPool({ uri: process.env.DATABASE_URL }),
+    }),
   });
 
   interval = setInterval(async () => {
@@ -21,32 +23,42 @@ let db: Kysely<Database>;
     } catch (error) {
       console.log(error);
     }
-  }, 1_000)
+  }, 1_000);
 })();
 
-process.on('exit', async () => {
+process.on("exit", async () => {
   await db.destroy();
   clearInterval(interval);
-})
+});
 
 async function getRow() {
-  const response = await axios.get<string>(process.env.STATUS_URL ?? '', {
+  const response = await axios.get<string>(process.env.STATUS_URL ?? "", {
     auth: {
-      username: process.env.AUTH_USER ?? '',
-      password: process.env.AUTH_PASSWORD ?? '',
-    }
+      username: process.env.AUTH_USER ?? "",
+      password: process.env.AUTH_PASSWORD ?? "",
+    },
   });
 
   const scriptTag = '<script type="text/javascript">';
-  const firstScriptTag = response.data.indexOf('<script type="text/javascript">');
-  const startIndex = response.data.indexOf('<script type="text/javascript">', firstScriptTag + 1) + scriptTag.length
-  const endIndex = response.data.indexOf('function initPageText()', startIndex);
+  const firstScriptTag = response.data.indexOf(
+    '<script type="text/javascript">'
+  );
+  const startIndex =
+    response.data.indexOf(
+      '<script type="text/javascript">',
+      firstScriptTag + 1
+    ) + scriptTag.length;
+  const endIndex = response.data.indexOf("function initPageText()", startIndex);
 
   const data = response.data
     .slice(startIndex, endIndex)
-    .split('\n')
-    .map((item) => item.split('='))
-    .map((item) => item.map((i) => i.replace('var', '').replace(/\"/g, '').replace(';', '').trim()))
+    .split("\n")
+    .map((item) => item.split("="))
+    .map((item) =>
+      item.map((i) =>
+        i.replace("var", "").replace(/"/g, "").replace(";", "").trim()
+      )
+    );
 
   const record: Measurement = Object.fromEntries(data);
 
@@ -57,10 +69,10 @@ async function getRow() {
     alarm: record.webdata_alarm,
     utime: Number(record.webdata_utime),
     cover_sta_rssi: record.cover_sta_rssi,
-    timestamp: new Date()
-  }
+    timestamp: new Date(),
+  };
 }
 
 async function insertRow(row: Row) {
-  return db.insertInto('logs').values(row).execute();
+  return db.insertInto("logs").values(row).execute();
 }
