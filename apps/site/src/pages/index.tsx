@@ -1,9 +1,110 @@
+import { addDays } from "date-fns";
 import type { NextPage } from "next";
 import Head from "next/head";
+import React, { useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 import { trpc } from "../utils/trpc";
 
+type View = "power" | "energy_delta" | "energy_sum";
+type Range = "day" | "week" | "month" | "quarter" | "year";
+
 const Home: NextPage = () => {
-  const resultQuery = trpc.logs.getLast10.useQuery();
+  const [view, setView] = useState<View>("power");
+  const [range, setRange] = useState<Range>("day");
+  const [startDate, setStartDate] = useState(new Date());
+
+  const getNowQuery = trpc.logs.getNow.useQuery(undefined, {
+    refetchInterval: false,
+  });
+
+  const getPowerQueryByDay = trpc.logs.getPowerByDay.useQuery(
+    { date: startDate },
+    {
+      enabled: view === "power" && range === "day",
+    }
+  );
+
+  const data = getPowerQueryByDay.data?.map((item) => {
+    return {
+      name: item.hour,
+      power: item.average,
+    };
+  });
+
+  const handleYearChange: React.ChangeEventHandler<HTMLSelectElement> = (
+    event
+  ) => {
+    const { value } = event.target;
+
+    if (
+      value === "day" ||
+      value === "week" ||
+      value === "month" ||
+      value === "quarter" ||
+      value === "year"
+    ) {
+      setRange(value);
+    }
+  };
+
+  const handleDateChangeBackwards = () => {
+    if (range === "day") {
+      setStartDate((prev) => addDays(prev, -1));
+    }
+  };
+
+  const handleDateChangeForwards = () => {
+    if (range === "day") {
+      setStartDate((prev) => addDays(prev, 1));
+    }
+  };
+
+  const { title, subtitle } = (() => {
+    return {
+      title: (() => {
+        if (view === "power") {
+          switch (range) {
+            case "day":
+              return "Średnia moc względem godziny";
+            case "week":
+              return "Średnia moc względem dnia";
+            case "month":
+              return "Średnia moc względem tygodnia";
+            case "quarter":
+              return "Średnia moc względem kwartału";
+            case "year":
+              return "Średnia moc względem lat";
+          }
+        }
+
+        return "";
+      })(),
+      subtitle: (() => {
+        switch (range) {
+          case "day":
+            return startDate.toLocaleDateString();
+          case "week":
+            return startDate.toJSON();
+          case "month":
+            return startDate.toJSON();
+          case "quarter":
+            return startDate.toJSON();
+          case "year":
+            return startDate.toJSON();
+        }
+      })(),
+    };
+  })();
 
   return (
     <>
@@ -13,10 +114,111 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main>
-        
-      </main>
-     </>
+      <div id="container" className="flex flex-col w-full h-full bg-gray-200">
+        <header className="flex items-center w-full h-32 gap-4 px-4 py-4 justify-evenly">
+          <Card
+            label="Moc teraz"
+            value={getNowQuery.data?.power_now ?? 0}
+            unit="W"
+            currentView={view}
+            setView={setView}
+            view="power"
+          />
+          <Card
+            label="Energia dziś"
+            value={getNowQuery.data?.energy_today ?? 0}
+            unit="kWh"
+            currentView={view}
+            setView={setView}
+            view="energy_delta"
+          />
+          <Card
+            label="Energia całość"
+            value={getNowQuery.data?.energy_total ?? 0}
+            unit="kWh"
+            currentView={view}
+            setView={setView}
+            view="energy_sum"
+          />
+        </header>
+
+        <div className="w-full pb-2 text-xl font-bold text-center">{title}</div>
+        <div className="w-full pb-2 text-center text-md">{subtitle}</div>
+
+        <main className="flex flex-col flex-1">
+          {view === "power" && (
+            <ResponsiveContainer width="100%">
+              <BarChart data={data}>
+                <CartesianGrid />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip label="test" />
+                <Bar dataKey="power" fill="orangered">
+                  <LabelList dataKey="power" position="top" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </main>
+
+        <footer className="flex items-center w-full h-24 gap-4 px-4 justify-evenly">
+          <FooterButton onClick={handleDateChangeBackwards}>
+            {"<<"}
+          </FooterButton>
+          <select
+            className="flex-1 h-12 text-xl font-bold text-center bg-gray-300 border-2 border-gray-700 rounded-md"
+            value={range}
+            onChange={handleYearChange}
+          >
+            <option value="day">Dzień</option>
+            <option value="week">Tydzień</option>
+            <option value="month">Miesiąc</option>
+            <option value="quarter">Kwartał</option>
+            <option value="year">Rok</option>
+          </select>
+          <FooterButton onClick={handleDateChangeForwards}>{">>"}</FooterButton>
+        </footer>
+      </div>
+    </>
+  );
+};
+
+const FooterButton: React.FC<
+  React.DetailedHTMLProps<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    HTMLButtonElement
+  >
+> = (props) => {
+  return (
+    <button
+      {...props}
+      className="w-16 h-12 bg-gray-300 border-2 border-gray-700 rounded-md"
+    >
+      {props.children}
+    </button>
+  );
+};
+
+const Card: React.FC<{
+  label: string;
+  value: number | string;
+  unit: string;
+  setView: React.Dispatch<React.SetStateAction<View>>;
+  view: View;
+  currentView: View;
+}> = (props) => {
+  return (
+    <div
+      onClick={() => props.setView(props.view)}
+      className={`flex flex-col items-center justify-center flex-1 h-full border-4 ${
+        props.view === props.currentView
+          ? "border-green-900 bg-green-300"
+          : "border-gray-700 bg-gray-300"
+      } rounded-xl`}
+    >
+      <div className="text-sm font-bold">{`${props.value} (${props.unit})`}</div>
+      <div className="text-sm">{props.label}</div>
+    </div>
   );
 };
 
