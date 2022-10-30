@@ -9,9 +9,9 @@ export function middleware(req: NextRequest) {
 
   if (basicAuth) {
     const authValue = basicAuth.split(" ")[1] ?? "";
-    const [user, pwd] = atob(authValue).split(":");
+    const [user, pass] = atob(authValue).split(":");
 
-    if (user === "4dmin" && pwd === "testpwd123") {
+    if (user === process.env.BASIC_USER && pass === process.env.BASIC_PASS) {
       return NextResponse.next();
     }
   }

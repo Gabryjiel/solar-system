@@ -12,6 +12,12 @@ import {
 export const MyBarChart: React.FC<{
   data?: { name: string | number; value: number }[];
 }> = (props) => {
+  const dataMin =
+    props.data?.reduce(
+      (all, cur) => (cur.value < all ? cur.value : all),
+      props.data[0]?.value ?? 0
+    ) ?? 0;
+
   const dataMax =
     props.data?.reduce(
       (all, cur) => (cur.value > all ? cur.value : all),
@@ -25,8 +31,10 @@ export const MyBarChart: React.FC<{
         <XAxis dataKey="name" />
         <YAxis
           dataKey="value"
-          mirror
-          domain={[0, Math.ceil(dataMax + dataMax * 0.05)]}
+          domain={[
+            Math.floor(dataMin - dataMin * 0.05),
+            Math.ceil(dataMax + dataMax * 0.05),
+          ]}
         />
         <Tooltip />
         <Bar dataKey="value" fill="orangered">

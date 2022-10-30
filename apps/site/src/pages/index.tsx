@@ -1,4 +1,11 @@
-import { addDays, lightFormat } from "date-fns";
+import {
+  addDays,
+  addMonths,
+  addQuarters,
+  addWeeks,
+  addYears,
+  lightFormat,
+} from "date-fns";
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
 import Head from "next/head";
@@ -19,21 +26,17 @@ const Home: NextPage = () => {
   const [range, setRange] = useState<Range>("day");
   const [startDate, setStartDate] = useState(new Date());
 
-  const getNowQuery = trpc.logs.getNow.useQuery(undefined, {
-    refetchInterval: false,
-  });
+  const getNowQuery = trpc.logs.getNow.useQuery(
+    {},
+    {
+      refetchInterval: false,
+    }
+  );
 
   const getPowerQueryByDay = trpc.logs.getPowerByDay.useQuery(
     { date: startDate },
     {
       enabled: view === "power" && range === "day",
-      select: (data) =>
-        data.map((item) => {
-          return {
-            name: item.hour,
-            value: item.average,
-          };
-        }),
     }
   );
 
@@ -41,27 +44,76 @@ const Home: NextPage = () => {
     { startDate: startDate },
     {
       enabled: view === "power" && range === "week",
-      select: (data) =>
-        data.map((item) => {
-          return {
-            name: item.date,
-            value: item.average,
-          };
-        }),
     }
   );
 
-  const getEnergyByDayQuery = trpc.logs.getEnergyByDate.useQuery(
+  const getPowerByMonthQuery = trpc.logs.getPowerByMonth.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "power" && range === "month",
+    }
+  );
+
+  const getPowerByYearQuery = trpc.logs.getPowerByYear.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "power" && range === "year",
+    }
+  );
+
+  const getEnergyByDayQuery = trpc.logs.getEnergyByDay.useQuery(
     { date: startDate },
     {
       enabled: view === "energy_delta" && range === "day",
-      select: (data) =>
-        data.map((item) => {
-          return {
-            name: item.hour,
-            value: item.average,
-          };
-        }),
+    }
+  );
+
+  const getEnergyByWeekQuery = trpc.logs.getEnergyByWeek.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "energy_delta" && range === "week",
+    }
+  );
+
+  const getEnergyByMonthQuery = trpc.logs.getEnergyByMonth.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "energy_delta" && range === "month",
+    }
+  );
+
+  const getEnergyByYearQuery = trpc.logs.getEnergyByYear.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "energy_delta" && range === "year",
+    }
+  );
+
+  const getEnergyTotalByDayQuery = trpc.logs.getEnergyTotalByDay.useQuery(
+    { date: startDate },
+    {
+      enabled: view === "energy_sum" && range === "day",
+    }
+  );
+
+  const getEnergyTotalByWeekQuery = trpc.logs.getEnergyTotalByWeek.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "energy_sum" && range === "week",
+    }
+  );
+
+  const getEnergyTotalByMonthQuery = trpc.logs.getEnergyTotalByMonth.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "energy_sum" && range === "month",
+    }
+  );
+
+  const getEnergyTotalByYearQuery = trpc.logs.getEnergyTotalByYear.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "energy_sum" && range === "year",
     }
   );
 
@@ -85,7 +137,13 @@ const Home: NextPage = () => {
     if (range === "day") {
       setStartDate((prev) => addDays(prev, -1));
     } else if (range === "week") {
-      setStartDate((prev) => addDays(prev, -7));
+      setStartDate((prev) => addWeeks(prev, -1));
+    } else if (range === "month") {
+      setStartDate((prev) => addMonths(prev, -1));
+    } else if (range === "quarter") {
+      setStartDate((prev) => addQuarters(prev, -1));
+    } else if (range === "year") {
+      setStartDate((prev) => addYears(prev, -1));
     }
   };
 
@@ -93,11 +151,17 @@ const Home: NextPage = () => {
     if (range === "day") {
       setStartDate((prev) => addDays(prev, 1));
     } else if (range === "week") {
-      setStartDate((prev) => addDays(prev, 7));
+      setStartDate((prev) => addWeeks(prev, 1));
+    } else if (range === "month") {
+      setStartDate((prev) => addMonths(prev, 1));
+    } else if (range === "quarter") {
+      setStartDate((prev) => addQuarters(prev, 1));
+    } else if (range === "year") {
+      setStartDate((prev) => addYears(prev, 1));
     }
   };
 
-  const { title, subtitle, forwardDisabled } = (() => {
+  const { title, subtitle, forwardDisabled, Chart } = (() => {
     return {
       title: (() => {
         if (view === "power") {
@@ -135,6 +199,45 @@ const Home: NextPage = () => {
         }
       })(),
       forwardDisabled: startDate.toDateString() === new Date().toDateString(),
+      Chart: (() => {
+        if (view === "power") {
+          if (range === "day") {
+            return <MyBarChart data={getPowerQueryByDay.data} />;
+          } else if (range === "week") {
+            return <MyBarChart data={getPowerByWeekQuery.data} />;
+          } else if (range === "month") {
+            return <MyBarChart data={getPowerByMonthQuery.data} />;
+          } else if (range === "quarter") {
+            return <MyBarChart data={getPowerByYearQuery.data} />;
+          } else if (range === "year") {
+            return <MyBarChart data={getPowerByYearQuery.data} />;
+          }
+        } else if (view === "energy_delta") {
+          if (range === "day") {
+            return <MyBarChart data={getEnergyByDayQuery.data} />;
+          } else if (range === "week") {
+            return <MyBarChart data={getEnergyByWeekQuery.data} />;
+          } else if (range === "month") {
+            return <MyBarChart data={getEnergyByMonthQuery.data} />;
+          } else if (range === "quarter") {
+            return <MyBarChart data={getEnergyByWeekQuery.data} />;
+          } else if (range === "year") {
+            return <MyBarChart data={getEnergyByYearQuery.data} />;
+          }
+        } else if (view === "energy_sum") {
+          if (range === "day") {
+            return <MyBarChart data={getEnergyTotalByDayQuery.data} />;
+          } else if (range === "week") {
+            return <MyBarChart data={getEnergyTotalByWeekQuery.data} />;
+          } else if (range === "month") {
+            return <MyBarChart data={getEnergyTotalByMonthQuery.data} />;
+          } else if (range === "quarter") {
+            return <MyBarChart data={getEnergyTotalByWeekQuery.data} />;
+          } else if (range === "year") {
+            return <MyBarChart data={getEnergyTotalByYearQuery.data} />;
+          }
+        }
+      })(),
     };
   })();
 
@@ -179,23 +282,7 @@ const Home: NextPage = () => {
           {subtitle}
         </div>
 
-        <main className="flex flex-col flex-1">
-          {view === "power" && range === "day" && (
-            <>
-              <MyBarChart data={getPowerQueryByDay.data} />
-            </>
-          )}
-          {view === "power" && range === "week" && (
-            <>
-              <MyBarChart data={getPowerByWeekQuery.data} />
-            </>
-          )}
-          {view === "energy_delta" && (
-            <>
-              <MyBarChart data={getEnergyByDayQuery.data} />
-            </>
-          )}
-        </main>
+        <main className="flex flex-col flex-1">{Chart}</main>
 
         <footer className="flex items-center w-full h-24 gap-4 px-4 justify-evenly">
           <FooterButton onClick={handleDateChangeBackwards}>
