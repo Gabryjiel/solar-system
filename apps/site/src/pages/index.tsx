@@ -1,19 +1,15 @@
-import { addDays } from "date-fns";
+import { addDays, lightFormat } from "date-fns";
 import type { NextPage } from "next";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import React, { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  LabelList,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { trpc } from "../utils/trpc";
+
+const MyBarChart = dynamic(
+  () => import("../components/charts/MyBarChart").then((imp) => imp.MyBarChart),
+  { ssr: false }
+);
 
 type View = "power" | "energy_delta" | "energy_sum";
 type Range = "day" | "week" | "month" | "quarter" | "year";
@@ -31,15 +27,43 @@ const Home: NextPage = () => {
     { date: startDate },
     {
       enabled: view === "power" && range === "day",
+      select: (data) =>
+        data.map((item) => {
+          return {
+            name: item.hour,
+            value: item.average,
+          };
+        }),
     }
   );
 
-  const data = getPowerQueryByDay.data?.map((item) => {
-    return {
-      name: item.hour,
-      power: item.average,
-    };
-  });
+  const getPowerByWeekQuery = trpc.logs.getPowerByWeek.useQuery(
+    { startDate: startDate },
+    {
+      enabled: view === "power" && range === "week",
+      select: (data) =>
+        data.map((item) => {
+          return {
+            name: item.date,
+            value: item.average,
+          };
+        }),
+    }
+  );
+
+  const getEnergyByDayQuery = trpc.logs.getEnergyByDate.useQuery(
+    { date: startDate },
+    {
+      enabled: view === "energy_delta" && range === "day",
+      select: (data) =>
+        data.map((item) => {
+          return {
+            name: item.hour,
+            value: item.average,
+          };
+        }),
+    }
+  );
 
   const handleYearChange: React.ChangeEventHandler<HTMLSelectElement> = (
     event
@@ -60,30 +84,34 @@ const Home: NextPage = () => {
   const handleDateChangeBackwards = () => {
     if (range === "day") {
       setStartDate((prev) => addDays(prev, -1));
+    } else if (range === "week") {
+      setStartDate((prev) => addDays(prev, -7));
     }
   };
 
   const handleDateChangeForwards = () => {
     if (range === "day") {
       setStartDate((prev) => addDays(prev, 1));
+    } else if (range === "week") {
+      setStartDate((prev) => addDays(prev, 7));
     }
   };
 
-  const { title, subtitle } = (() => {
+  const { title, subtitle, forwardDisabled } = (() => {
     return {
       title: (() => {
         if (view === "power") {
           switch (range) {
             case "day":
-              return "Średnia moc względem godziny";
+              return "Średnia moc względem godziny (W)";
             case "week":
-              return "Średnia moc względem dnia";
+              return "Średnia moc względem dnia (W)";
             case "month":
-              return "Średnia moc względem tygodnia";
+              return "Średnia moc względem tygodnia (W)";
             case "quarter":
-              return "Średnia moc względem kwartału";
+              return "Średnia moc względem kwartału (W)";
             case "year":
-              return "Średnia moc względem lat";
+              return "Średnia moc względem lat (W)";
           }
         }
 
@@ -94,7 +122,10 @@ const Home: NextPage = () => {
           case "day":
             return startDate.toLocaleDateString();
           case "week":
-            return startDate.toJSON();
+            return `${lightFormat(startDate, "yyyy-MM-dd")} - ${lightFormat(
+              addDays(startDate, 7),
+              "yyyy-MM-dd"
+            )}`;
           case "month":
             return startDate.toJSON();
           case "quarter":
@@ -103,6 +134,7 @@ const Home: NextPage = () => {
             return startDate.toJSON();
         }
       })(),
+      forwardDisabled: startDate.toDateString() === new Date().toDateString(),
     };
   })();
 
@@ -143,21 +175,25 @@ const Home: NextPage = () => {
         </header>
 
         <div className="w-full pb-2 text-xl font-bold text-center">{title}</div>
-        <div className="w-full pb-2 text-center text-md">{subtitle}</div>
+        <div className="w-full pb-2 text-center font-bold text-md">
+          {subtitle}
+        </div>
 
         <main className="flex flex-col flex-1">
-          {view === "power" && (
-            <ResponsiveContainer width="100%">
-              <BarChart data={data}>
-                <CartesianGrid />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip label="test" />
-                <Bar dataKey="power" fill="orangered">
-                  <LabelList dataKey="power" position="top" />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          {view === "power" && range === "day" && (
+            <>
+              <MyBarChart data={getPowerQueryByDay.data} />
+            </>
+          )}
+          {view === "power" && range === "week" && (
+            <>
+              <MyBarChart data={getPowerByWeekQuery.data} />
+            </>
+          )}
+          {view === "energy_delta" && (
+            <>
+              <MyBarChart data={getEnergyByDayQuery.data} />
+            </>
           )}
         </main>
 
@@ -176,7 +212,12 @@ const Home: NextPage = () => {
             <option value="quarter">Kwartał</option>
             <option value="year">Rok</option>
           </select>
-          <FooterButton onClick={handleDateChangeForwards}>{">>"}</FooterButton>
+          <FooterButton
+            onClick={handleDateChangeForwards}
+            disabled={forwardDisabled}
+          >
+            {">>"}
+          </FooterButton>
         </footer>
       </div>
     </>
@@ -192,7 +233,11 @@ const FooterButton: React.FC<
   return (
     <button
       {...props}
-      className="w-16 h-12 bg-gray-300 border-2 border-gray-700 rounded-md"
+      className={`w-16 h-12 grid place-items-center text-2xl font-bold border-2 border-blue-900 rounded-md ${
+        props.disabled
+          ? "bg-gray-300 text-gray-400"
+          : "bg-blue-400 text-gray-700"
+      }`}
     >
       {props.children}
     </button>
