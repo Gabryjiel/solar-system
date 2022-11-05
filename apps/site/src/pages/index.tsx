@@ -1,3 +1,4 @@
+import { lightFormat } from "date-fns";
 import type { NextPage } from "next";
 import Head from "next/head";
 
@@ -38,6 +39,16 @@ const Page: NextPage = () => {
             unit="kWh"
           />
         </header>
+
+        <div className="flex w-full flex-col items-center">
+          <h2 className="text-xl">Data ostatniego pomiaru:</h2>
+          <span className="font-bold">
+            {lightFormat(
+              getNowQuery.data?.timestamp ?? 0,
+              "HH:mm:ss, dd.MM.yyyy"
+            )}
+          </span>
+        </div>
 
         <main className="flex flex-col flex-1"></main>
 

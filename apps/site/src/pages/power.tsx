@@ -25,28 +25,28 @@ const Page: NextPage = () => {
   const [range, setRange] = useState<Range>("day");
   const [startDate, setStartDate] = useState(new Date());
 
-  const getPowerQueryByDay = trpc.logs.getPowerByDay.useQuery(
+  const getPowerQueryByDay = trpc.power.getPowerByDay.useQuery(
     { date: startDate },
     {
       enabled: range === "day",
     }
   );
 
-  const getPowerByWeekQuery = trpc.logs.getPowerByWeek.useQuery(
+  const getPowerByWeekQuery = trpc.power.getPowerByWeek.useQuery(
     { startDate: startDate },
     {
       enabled: range === "week",
     }
   );
 
-  const getPowerByMonthQuery = trpc.logs.getPowerByMonth.useQuery(
+  const getPowerByMonthQuery = trpc.power.getPowerByMonth.useQuery(
     { startDate: startDate },
     {
       enabled: range === "month",
     }
   );
 
-  const getPowerByYearQuery = trpc.logs.getPowerByYear.useQuery(
+  const getPowerByYearQuery = trpc.power.getPowerByYear.useQuery(
     { startDate: startDate },
     {
       enabled: range === "year",
