@@ -28,26 +28,18 @@ export const MyBarChart: React.FC<{
     <ResponsiveContainer width="100%">
       <BarChart data={props.data} layout="vertical">
         <CartesianGrid />
-        {/* <XAxis dataKey="name" />
-        <YAxis
-          dataKey="value"
-          domain={[
-            Math.floor(dataMin - dataMin * 0.05),
-            Math.ceil(dataMax + dataMax * 0.05),
-          ]}
-        /> */}
         <YAxis dataKey="name" type="category" />
         <XAxis
           dataKey="value"
+          type="number"
           domain={[
-            Math.floor(dataMin - dataMin * 0.05),
-            Math.ceil(dataMax + dataMax * 0.05),
+            Math.max(dataMin - dataMin * 0.2, 0),
+            Math.round(dataMax + dataMax * 0.2),
           ]}
-          interval="preserveEnd"
         />
         <Tooltip />
-        <Bar dataKey="value" fill="orangered">
-          <LabelList dataKey="value" position="top" />
+        <Bar layout="vertical" dataKey="value" fill="cornflowerblue">
+          <LabelList dataKey="value" position="right" />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
