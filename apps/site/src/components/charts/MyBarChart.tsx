@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -12,6 +13,21 @@ import {
 export const MyBarChart: React.FC<{
   data?: { name: string | number; value: number }[];
 }> = (props) => {
+  const [isPortrait, setIsPortrait] = useState(screen.height > screen.width);
+  const layout = isPortrait ? "vertical" : "horizontal";
+
+  useEffect(() => {
+    const changeOrientation = () => {
+      setIsPortrait(screen.height > screen.width);
+    };
+
+    addEventListener("orientationchange", changeOrientation);
+
+    return () => {
+      removeEventListener("orientationchange", changeOrientation);
+    };
+  }, []);
+
   const dataMin =
     props.data?.reduce(
       (all, cur) => (cur.value < all ? cur.value : all),
@@ -26,20 +42,36 @@ export const MyBarChart: React.FC<{
 
   return (
     <ResponsiveContainer width="100%">
-      <BarChart data={props.data} layout="vertical">
+      <BarChart data={props.data} layout={layout}>
         <CartesianGrid />
-        <YAxis dataKey="name" type="category" />
-        <XAxis
-          dataKey="value"
-          type="number"
-          domain={[
-            Math.max(dataMin - dataMin * 0.2, 0),
-            Math.round(dataMax + dataMax * 0.2),
-          ]}
-        />
+        {isPortrait ? (
+          <>
+            <YAxis dataKey="name" type="category" />
+            <XAxis
+              dataKey="value"
+              type="number"
+              domain={[
+                Math.max(dataMin - dataMin * 0.2, 0),
+                Math.round(dataMax + dataMax * 0.2),
+              ]}
+            />
+          </>
+        ) : (
+          <>
+            <XAxis dataKey="name" type="category" />
+            <YAxis
+              dataKey="value"
+              type="number"
+              domain={[
+                Math.max(dataMin - dataMin * 0.2, 0),
+                Math.round(dataMax + dataMax * 0.2),
+              ]}
+            />
+          </>
+        )}
         <Tooltip />
-        <Bar layout="vertical" dataKey="value" fill="cornflowerblue">
-          <LabelList dataKey="value" position="right" />
+        <Bar layout={layout} dataKey="value" fill="cornflowerblue">
+          <LabelList dataKey="value" position={isPortrait ? "right" : "top"} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
