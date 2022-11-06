@@ -5,16 +5,16 @@ import { z } from "zod";
 import { t } from "../trpc";
 
 export const powerRouter = t.router({
-  getPowerByDay: t.procedure
-    .input(z.object({ date: z.date() }))
+  byHour: t.procedure
+    .input(z.object({ startDate: z.date() }))
     .query(async ({ ctx, input }) => {
-      const start = input.date.toJSON().slice(0, 10);
-      const end = addDays(input.date, 1).toJSON().slice(0, 10);
+      const start = input.startDate.toJSON().slice(0, 10);
+      const end = addDays(input.startDate, 1).toJSON().slice(0, 10);
 
       const result = await ctx.prisma.$queryRaw<
         {
           value: number;
-          name: number;
+          name: string;
         }[]
       >(
         Prisma.sql`select round(avg(power_now)) as value, hour(timestamp) as name from logs where timestamp > ${start} and timestamp < ${end} group by hour(timestamp)`
@@ -22,7 +22,7 @@ export const powerRouter = t.router({
 
       return result;
     }),
-  getPowerByWeek: t.procedure
+  byDay: t.procedure
     .input(z.object({ startDate: z.date() }))
     .query(async ({ ctx, input }) => {
       const start = input.startDate.toJSON().slice(0, 10);
@@ -44,7 +44,24 @@ export const powerRouter = t.router({
         };
       });
     }),
-  getPowerByMonth: t.procedure
+  byWeek: t.procedure
+    .input(z.object({ startDate: z.date() }))
+    .query(async ({ ctx, input }) => {
+      const start = input.startDate.toJSON().slice(0, 10);
+      const end = addDays(input.startDate, 7).toJSON().slice(0, 10);
+
+      const result = await ctx.prisma.$queryRaw<
+        {
+          value: number;
+          name: string;
+        }[]
+      >(
+        Prisma.sql`select round(avg(power_now)) as value, week(timestamp) as name from logs where timestamp > ${start} and timestamp < ${end} group by week(timestamp)`
+      );
+
+      return result;
+    }),
+  byMonth: t.procedure
     .input(z.object({ startDate: z.date() }))
     .query(async ({ ctx, input }) => {
       const start = input.startDate.toJSON().slice(0, 10);
@@ -61,7 +78,24 @@ export const powerRouter = t.router({
 
       return result;
     }),
-  getPowerByYear: t.procedure
+  byQuarter: t.procedure
+    .input(z.object({ startDate: z.date() }))
+    .query(async ({ ctx, input }) => {
+      const start = input.startDate.toJSON().slice(0, 10);
+      const end = addDays(input.startDate, 7).toJSON().slice(0, 10);
+
+      const result = await ctx.prisma.$queryRaw<
+        {
+          value: number;
+          name: string;
+        }[]
+      >(
+        Prisma.sql`select round(avg(power_now)) as value, QUARTER(timestamp) as name from logs where timestamp > ${start} and timestamp < ${end} group by QUARTER(timestamp)`
+      );
+
+      return result;
+    }),
+  byYear: t.procedure
     .input(z.object({ startDate: z.date() }))
     .query(async ({ ctx, input }) => {
       const start = input.startDate.toJSON().slice(0, 10);

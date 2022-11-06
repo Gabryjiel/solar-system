@@ -1,17 +1,11 @@
-import {
-  addDays,
-  addMonths,
-  addQuarters,
-  addWeeks,
-  addYears,
-  lightFormat,
-} from "date-fns";
+import { addDays, addMonths, addQuarters, addWeeks, addYears } from "date-fns";
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import React, { useState } from "react";
 
 import { BottomNavigation } from "../components/BottomNavigation";
+import { Select } from "../components/Select";
 import { trpc } from "../utils/trpc";
 
 const MyBarChart = dynamic(
@@ -19,135 +13,153 @@ const MyBarChart = dynamic(
   { ssr: false }
 );
 
-type Range = "day" | "week" | "month" | "quarter" | "year";
+enum Range {
+  HOUR = "HOUR",
+  DAY = "DAY",
+  WEEK = "WEEK",
+  MONTH = "MONTH",
+  QUARTER = "QUARTER",
+  YEAR = "YEAR",
+}
+
+const RangeOptions = [
+  { key: "range-options-hour", label: "Godzina", value: Range.HOUR },
+  { key: "range-options-day", label: "Dzień", value: Range.DAY },
+  { key: "range-options-week", label: "Tydzień", value: Range.WEEK },
+  { key: "range-options-month", label: "Miesiąc", value: Range.MONTH },
+  { key: "range-options-quarter", label: "Kwartał", value: Range.QUARTER },
+  { key: "range-options-year", label: "Rok", value: Range.YEAR },
+];
+
+const Title = {
+  [Range.HOUR]: "Średnia moc względem godziny",
+  [Range.DAY]: "Średnia moc względem dnia",
+  [Range.WEEK]: "Średnia moc względem tygodnia",
+  [Range.MONTH]: "Średnia moc względem miesiąca",
+  [Range.QUARTER]: "Średnia moc względem kwartału",
+  [Range.YEAR]: "Średnia moc względem roku",
+};
+
+const Subtitle = {
+  [Range.HOUR]: (date: Date) => `${date.toLocaleDateString()}`,
+  [Range.DAY]: (date: Date) =>
+    `${date.toLocaleDateString()} - ${addDays(date, 6).toLocaleDateString()}`,
+  [Range.WEEK]: (date: Date) => `${date.toLocaleDateString()}`,
+  [Range.MONTH]: (date: Date) => `${date.toLocaleDateString()}`,
+  [Range.QUARTER]: (date: Date) => `${date.toLocaleDateString()}`,
+  [Range.YEAR]: (date: Date) => `${date.toLocaleDateString()}`,
+};
 
 const Page: NextPage = () => {
-  const [range, setRange] = useState<Range>("day");
+  const [range, setRange] = useState<Range>(Range.HOUR);
   const [startDate, setStartDate] = useState(new Date());
 
-  const getPowerQueryByDay = trpc.power.getPowerByDay.useQuery(
-    { date: startDate },
+  const byHourQuery = trpc.power.byHour.useQuery(
+    { startDate },
     {
-      enabled: range === "day",
+      enabled: range === Range.HOUR,
+      keepPreviousData: true,
     }
   );
 
-  const getPowerByWeekQuery = trpc.power.getPowerByWeek.useQuery(
-    { startDate: startDate },
+  const byDayQuery = trpc.power.byDay.useQuery(
+    { startDate },
     {
-      enabled: range === "week",
+      enabled: range === Range.DAY,
+      keepPreviousData: true,
     }
   );
 
-  const getPowerByMonthQuery = trpc.power.getPowerByMonth.useQuery(
-    { startDate: startDate },
+  const byWeekQuery = trpc.power.byWeek.useQuery(
+    { startDate },
     {
-      enabled: range === "month",
+      enabled: range === Range.WEEK,
+      keepPreviousData: true,
     }
   );
 
-  const getPowerByYearQuery = trpc.power.getPowerByYear.useQuery(
-    { startDate: startDate },
+  const byMonthQuery = trpc.power.byMonth.useQuery(
+    { startDate },
     {
-      enabled: range === "year",
+      enabled: range === Range.MONTH,
+      keepPreviousData: true,
     }
   );
 
-  const handleYearChange: React.ChangeEventHandler<HTMLSelectElement> = (
+  const byQuarterQuery = trpc.power.byQuarter.useQuery(
+    { startDate },
+    {
+      enabled: range === Range.QUARTER,
+      keepPreviousData: true,
+    }
+  );
+
+  const byYearQuery = trpc.power.byYear.useQuery(
+    { startDate },
+    {
+      enabled: range === Range.YEAR,
+      keepPreviousData: true,
+    }
+  );
+
+  const handleRangeChange: React.ChangeEventHandler<HTMLSelectElement> = (
     event
   ) => {
     const { value } = event.target;
 
-    if (
-      value === "day" ||
-      value === "week" ||
-      value === "month" ||
-      value === "quarter" ||
-      value === "year"
-    ) {
-      setRange(value);
+    if (value in Range) {
+      setRange(value as Range);
     }
   };
 
   const handleDateChangeBackwards = () => {
-    if (range === "day") {
+    if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, -1));
-    } else if (range === "week") {
+    } else if (range === Range.DAY) {
       setStartDate((prev) => addWeeks(prev, -1));
-    } else if (range === "month") {
+    } else if (range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, -1));
-    } else if (range === "quarter") {
+    } else if (range === Range.MONTH) {
       setStartDate((prev) => addQuarters(prev, -1));
-    } else if (range === "year") {
+    } else if (range === Range.QUARTER) {
       setStartDate((prev) => addYears(prev, -1));
     }
   };
 
   const handleDateChangeForwards = () => {
-    if (range === "day") {
+    if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, 1));
-    } else if (range === "week") {
+    } else if (range === Range.DAY) {
       setStartDate((prev) => addWeeks(prev, 1));
-    } else if (range === "month") {
+    } else if (range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, 1));
-    } else if (range === "quarter") {
+    } else if (range === Range.MONTH) {
       setStartDate((prev) => addQuarters(prev, 1));
-    } else if (range === "year") {
+    } else if (range === Range.QUARTER) {
       setStartDate((prev) => addYears(prev, 1));
     }
   };
 
-  const { title, subtitle, forwardDisabled, Chart } = (() => {
-    return {
-      title: (() => {
-        switch (range) {
-          case "day":
-            return "Średnia moc względem godziny (W)";
-          case "week":
-            return "Średnia moc względem dnia (W)";
-          case "month":
-            return "Średnia moc względem tygodnia (W)";
-          case "quarter":
-            return "Średnia moc względem kwartału (W)";
-          case "year":
-            return "Średnia moc względem lat (W)";
-        }
-
-        return "";
-      })(),
-      subtitle: (() => {
-        switch (range) {
-          case "day":
-            return startDate.toLocaleDateString();
-          case "week":
-            return `${lightFormat(startDate, "yyyy-MM-dd")} - ${lightFormat(
-              addDays(startDate, 7),
-              "yyyy-MM-dd"
-            )}`;
-          case "month":
-            return startDate.toJSON();
-          case "quarter":
-            return startDate.toJSON();
-          case "year":
-            return startDate.toJSON();
-        }
-      })(),
-      forwardDisabled: startDate.toDateString() === new Date().toDateString(),
-      Chart: (() => {
-        if (range === "day") {
-          return <MyBarChart data={getPowerQueryByDay.data} />;
-        } else if (range === "week") {
-          return <MyBarChart data={getPowerByWeekQuery.data} />;
-        } else if (range === "month") {
-          return <MyBarChart data={getPowerByMonthQuery.data} />;
-        } else if (range === "quarter") {
-          return <MyBarChart data={getPowerByYearQuery.data} />;
-        } else if (range === "year") {
-          return <MyBarChart data={getPowerByYearQuery.data} />;
-        }
-      })(),
-    };
-  })();
+  const title = Title[range];
+  const subtitle = Subtitle[range](startDate);
+  const forwardDisabled =
+    startDate.toDateString() === new Date().toDateString();
+  const chartData =
+    (() => {
+      if (range === Range.HOUR) {
+        return byHourQuery.data;
+      } else if (range === Range.DAY) {
+        return byDayQuery.data;
+      } else if (range === Range.WEEK) {
+        return byWeekQuery.data;
+      } else if (range === Range.MONTH) {
+        return byMonthQuery.data;
+      } else if (range === Range.QUARTER) {
+        return byQuarterQuery.data;
+      } else if (range === Range.YEAR) {
+        return byYearQuery.data;
+      }
+    })() ?? [];
 
   return (
     <>
@@ -163,23 +175,19 @@ const Page: NextPage = () => {
           {subtitle}
         </div>
 
-        <main className="flex flex-col flex-1">{Chart}</main>
+        <main className="flex flex-col flex-1">
+          <MyBarChart data={chartData} />
+        </main>
 
         <footer className="flex items-center w-full h-24 gap-4 px-4 justify-evenly">
           <FooterButton onClick={handleDateChangeBackwards}>
             {"<<"}
           </FooterButton>
-          <select
-            className="flex-1 h-12 text-xl font-bold text-center bg-gray-300 border-2 border-gray-700 rounded-md"
+          <Select
+            onChange={handleRangeChange}
             value={range}
-            onChange={handleYearChange}
-          >
-            <option value="day">Dzień</option>
-            <option value="week">Tydzień</option>
-            <option value="month">Miesiąc</option>
-            <option value="quarter">Kwartał</option>
-            <option value="year">Rok</option>
-          </select>
+            options={RangeOptions}
+          />
           <FooterButton
             onClick={handleDateChangeForwards}
             disabled={forwardDisabled}
