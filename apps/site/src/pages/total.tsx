@@ -168,7 +168,10 @@ const Page: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div id="container" className="flex flex-col w-full h-full bg-gray-200">
+      <div
+        id="container"
+        className="flex flex-col w-screen h-screen bg-gray-200 overflow-hidden"
+      >
         <div className="w-full pb-2 text-xl font-bold text-center">{title}</div>
         <div className="w-full pb-2 font-bold text-center text-md">
           {subtitle}

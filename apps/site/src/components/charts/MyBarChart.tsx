@@ -3,6 +3,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Label,
   LabelList,
   ResponsiveContainer,
   Tooltip,
@@ -41,39 +42,44 @@ export const MyBarChart: React.FC<{
     ) ?? 0;
 
   return (
-    <ResponsiveContainer width="100%">
-      <BarChart data={props.data} layout={layout}>
-        <CartesianGrid />
-        {isPortrait ? (
-          <>
-            <YAxis dataKey="name" type="category" />
-            <XAxis
+    <div id="wrapper" className="w-full h-full">
+      <ResponsiveContainer height="100%">
+        <BarChart data={props.data} layout={layout}>
+          <CartesianGrid />
+          {isPortrait ? (
+            <>
+              <YAxis dataKey="name" type="category" />
+              <XAxis
+                dataKey="value"
+                type="number"
+                domain={[
+                  Math.max(dataMin - dataMin * 0.2, 0),
+                  Math.round(dataMax + dataMax * 0.2),
+                ]}
+              />
+            </>
+          ) : (
+            <>
+              <XAxis dataKey="name" type="category" />
+              <YAxis
+                dataKey="value"
+                type="number"
+                domain={[
+                  Math.max(dataMin - dataMin * 0.2, 0),
+                  Math.round(dataMax + dataMax * 0.2),
+                ]}
+              />
+            </>
+          )}
+          <Tooltip />
+          <Bar layout={layout} dataKey="value" fill="cornflowerblue">
+            <LabelList
               dataKey="value"
-              type="number"
-              domain={[
-                Math.max(dataMin - dataMin * 0.2, 0),
-                Math.round(dataMax + dataMax * 0.2),
-              ]}
+              position={isPortrait ? "right" : "top"}
             />
-          </>
-        ) : (
-          <>
-            <XAxis dataKey="name" type="category" />
-            <YAxis
-              dataKey="value"
-              type="number"
-              domain={[
-                Math.max(dataMin - dataMin * 0.2, 0),
-                Math.round(dataMax + dataMax * 0.2),
-              ]}
-            />
-          </>
-        )}
-        <Tooltip />
-        <Bar layout={layout} dataKey="value" fill="cornflowerblue">
-          <LabelList dataKey="value" position={isPortrait ? "right" : "top"} />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 };

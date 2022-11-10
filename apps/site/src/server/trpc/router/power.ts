@@ -40,7 +40,7 @@ export const powerRouter = t.router({
       return result.map((item) => {
         return {
           value: item.value,
-          name: lightFormat(item.name, "yyyy-MM-dd"),
+          name: lightFormat(item.name, "dd.MM"),
         };
       });
     }),
@@ -76,7 +76,12 @@ export const powerRouter = t.router({
         Prisma.sql`select round(avg(power_now)) as value, DATE_FORMAT(timestamp,'%Y-%m') as name from logs where timestamp > ${start} and timestamp < ${end} group by DATE_FORMAT(timestamp,'%Y-%m')`
       );
 
-      return result;
+      return result.map((item) => {
+        return {
+          value: item.value,
+          name: item.name.slice(5),
+        };
+      });
     }),
   byQuarter: t.procedure
     .input(z.object({ startDate: z.date() }))

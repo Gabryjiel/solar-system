@@ -5,6 +5,7 @@ import Head from "next/head";
 import React, { useState } from "react";
 
 import { BottomNavigation } from "../components/BottomNavigation";
+import { Main } from "../components/Main";
 import { Select } from "../components/Select";
 import { trpc } from "../utils/trpc";
 
@@ -170,16 +171,20 @@ const Page: NextPage = () => {
       </Head>
 
       <div id="container" className="flex flex-col w-full h-full bg-gray-200">
-        <div className="w-full pb-2 text-xl font-bold text-center">{title}</div>
-        <div className="w-full pb-2 font-bold text-center text-md">
-          {subtitle}
-        </div>
+        <header className="w-full h-16">
+          <div className="w-full pb-2 text-xl font-bold text-center">
+            {title}
+          </div>
+          <div className="w-full pb-2 font-bold text-center text-md">
+            {subtitle}
+          </div>
+        </header>
 
-        <main className="flex flex-col flex-1">
+        <Main>
           <MyBarChart data={chartData} />
-        </main>
+        </Main>
 
-        <footer className="flex items-center w-full h-24 gap-4 px-4 justify-evenly">
+        <footer className="flex items-center w-full h-16 gap-4 px-4 justify-evenly">
           <FooterButton onClick={handleDateChangeBackwards}>
             {"<<"}
           </FooterButton>
