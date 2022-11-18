@@ -3,16 +3,19 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Label,
   LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { z } from "zod";
+
+import { useDebounce } from "../../utils/hooks/useDebounce";
 
 export const MyBarChart: React.FC<{
   data?: { name: string | number; value: number }[];
+  drillDown: (date: string) => void;
 }> = (props) => {
   const [isPortrait, setIsPortrait] = useState(screen.height > screen.width);
   const layout = isPortrait ? "vertical" : "horizontal";
@@ -40,6 +43,15 @@ export const MyBarChart: React.FC<{
       (all, cur) => (cur.value > all ? cur.value : all),
       props.data[0]?.value ?? 0
     ) ?? 0;
+
+  const handleLabelDoubleClick = useDebounce((event: unknown) => {
+    const schema = z.object({
+      name: z.string().or(z.number()),
+    });
+    const result = schema.parse(event).name.toString();
+    console.log(result);
+    props.drillDown(result);
+  }, 100);
 
   return (
     <div id="wrapper" className="w-full h-full">
@@ -71,8 +83,31 @@ export const MyBarChart: React.FC<{
               />
             </>
           )}
-          <Tooltip />
-          <Bar layout={layout} dataKey="value" fill="cornflowerblue">
+          <Tooltip
+            content={(props) => {
+              const value = props.payload?.at(0)?.value ?? 0;
+              const date = props.payload?.at(0)?.payload.name ?? "";
+
+              return (
+                <div className="h-16 w-48 bg-slate-100 border-2 border-black flex flex-col justify-center p-2">
+                  <div>
+                    <span>{"Wartość: "}</span>
+                    <span>{value}</span>
+                  </div>
+                  <div>
+                    <span>{"Data: "}</span>
+                    <span>{date.toString()}</span>
+                  </div>
+                </div>
+              );
+            }}
+          />
+          <Bar
+            layout={layout}
+            dataKey="value"
+            fill="cornflowerblue"
+            onDoubleClick={handleLabelDoubleClick}
+          >
             <LabelList
               dataKey="value"
               position={isPortrait ? "right" : "top"}
