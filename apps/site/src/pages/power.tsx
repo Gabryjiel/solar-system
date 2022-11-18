@@ -1,4 +1,4 @@
-import { addDays, addMonths, addQuarters, addWeeks, addYears } from "date-fns";
+import { addDays, addMonths, addYears, lightFormat } from "date-fns";
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
 import Head from "next/head";
@@ -42,13 +42,12 @@ const Title = {
 };
 
 const Subtitle = {
-  [Range.HOUR]: (date: Date) => `${date.toLocaleDateString()}`,
-  [Range.DAY]: (date: Date) =>
-    `${date.toLocaleDateString()} - ${addDays(date, 6).toLocaleDateString()}`,
-  [Range.WEEK]: (date: Date) => `${date.toLocaleDateString()}`,
-  [Range.MONTH]: (date: Date) => `${date.toLocaleDateString()}`,
-  [Range.QUARTER]: (date: Date) => `${date.toLocaleDateString()}`,
-  [Range.YEAR]: (date: Date) => `${date.toLocaleDateString()}`,
+  [Range.HOUR]: (date: Date) => date.toLocaleDateString(),
+  [Range.DAY]: (date: Date) => lightFormat(date, "yyyy-MM"),
+  [Range.WEEK]: (date: Date) => lightFormat(date, "yyyy-MM"),
+  [Range.MONTH]: (date: Date) => date.getFullYear(),
+  [Range.QUARTER]: (date: Date) => date.getFullYear(),
+  [Range.YEAR]: (date: Date) => date.toLocaleDateString(),
 };
 
 const Page: NextPage = () => {
@@ -95,13 +94,10 @@ const Page: NextPage = () => {
     }
   );
 
-  const byYearQuery = trpc.power.byYear.useQuery(
-    { startDate },
-    {
-      enabled: range === Range.YEAR,
-      keepPreviousData: true,
-    }
-  );
+  const byYearQuery = trpc.power.byYear.useQuery(undefined, {
+    enabled: range === Range.YEAR,
+    keepPreviousData: true,
+  });
 
   const handleRangeChange: React.ChangeEventHandler<HTMLSelectElement> = (
     event
@@ -117,11 +113,11 @@ const Page: NextPage = () => {
     if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, -1));
     } else if (range === Range.DAY) {
-      setStartDate((prev) => addWeeks(prev, -1));
+      setStartDate((prev) => addMonths(prev, -1));
     } else if (range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, -1));
     } else if (range === Range.MONTH) {
-      setStartDate((prev) => addQuarters(prev, -1));
+      setStartDate((prev) => addYears(prev, -1));
     } else if (range === Range.QUARTER) {
       setStartDate((prev) => addYears(prev, -1));
     }
@@ -131,11 +127,11 @@ const Page: NextPage = () => {
     if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, 1));
     } else if (range === Range.DAY) {
-      setStartDate((prev) => addWeeks(prev, 1));
+      setStartDate((prev) => addMonths(prev, 1));
     } else if (range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, 1));
     } else if (range === Range.MONTH) {
-      setStartDate((prev) => addQuarters(prev, 1));
+      setStartDate((prev) => addYears(prev, 1));
     } else if (range === Range.QUARTER) {
       setStartDate((prev) => addYears(prev, 1));
     }
@@ -143,8 +139,11 @@ const Page: NextPage = () => {
 
   const title = Title[range];
   const subtitle = Subtitle[range](startDate);
+  const backwardDisabled = range === Range.YEAR;
   const forwardDisabled =
-    startDate.toDateString() === new Date().toDateString();
+    startDate.toDateString() === new Date().toDateString() ||
+    range === Range.YEAR;
+
   const chartData =
     (() => {
       if (range === Range.HOUR) {
@@ -161,6 +160,32 @@ const Page: NextPage = () => {
         return byYearQuery.data;
       }
     })() ?? [];
+
+  const drillDown = (value: string) => {
+    if (range === Range.DAY) {
+      const [day, month] = value.split(".");
+
+      if (day && month) {
+        setRange(Range.HOUR);
+        setStartDate(
+          (prev) => new Date(`${prev.getFullYear()}-${month}-${day}`)
+        );
+      }
+    } else if (range === Range.YEAR) {
+      if (/\d{4}/.test(value)) {
+        setRange(Range.MONTH);
+      }
+    } else if (range === Range.MONTH) {
+      if (/\d{2}/.test(value)) {
+        setRange(Range.DAY);
+        setStartDate((prev) => new Date(`${prev.getFullYear()}-${value}-01`));
+      }
+    } else if (range === Range.QUARTER) {
+      if (/\d{1}/.test(value)) {
+        setRange(Range.MONTH);
+      }
+    }
+  };
 
   return (
     <>
@@ -181,11 +206,14 @@ const Page: NextPage = () => {
         </header>
 
         <Main>
-          <MyBarChart data={chartData} />
+          <MyBarChart data={chartData} drillDown={drillDown} />
         </Main>
 
         <footer className="flex items-center w-full h-16 gap-4 px-4 justify-evenly">
-          <FooterButton onClick={handleDateChangeBackwards}>
+          <FooterButton
+            onClick={handleDateChangeBackwards}
+            disabled={backwardDisabled}
+          >
             {"<<"}
           </FooterButton>
           <Select
