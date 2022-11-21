@@ -15,7 +15,7 @@ import { useDebounce } from "../../utils/hooks/useDebounce";
 
 export const MyBarChart: React.FC<{
   data?: { name: string | number; value: number }[];
-  drillDown: (date: string) => void;
+  drillDown?: (date: string) => void;
 }> = (props) => {
   const [isPortrait, setIsPortrait] = useState(screen.height > screen.width);
   const layout = isPortrait ? "vertical" : "horizontal";
@@ -50,7 +50,7 @@ export const MyBarChart: React.FC<{
     });
     const result = schema.parse(event).name.toString();
     console.log(result);
-    props.drillDown(result);
+    props.drillDown?.(result);
   }, 100);
 
   return (
