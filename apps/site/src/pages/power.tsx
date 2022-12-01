@@ -7,21 +7,13 @@ import React, { useState } from "react";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { Main } from "../components/Main";
 import { Select } from "../components/Select";
+import { Range } from "../utils/enums";
 import { trpc } from "../utils/trpc";
 
 const MyBarChart = dynamic(
   () => import("../components/charts/MyBarChart").then((imp) => imp.MyBarChart),
   { ssr: false }
 );
-
-enum Range {
-  HOUR = "HOUR",
-  DAY = "DAY",
-  WEEK = "WEEK",
-  MONTH = "MONTH",
-  QUARTER = "QUARTER",
-  YEAR = "YEAR",
-}
 
 const RangeOptions = [
   { key: "range-options-hour", label: "Godzina", value: Range.HOUR },
@@ -112,13 +104,9 @@ const Page: NextPage = () => {
   const handleDateChangeBackwards = () => {
     if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, -1));
-    } else if (range === Range.DAY) {
+    } else if (range === Range.DAY || range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, -1));
-    } else if (range === Range.WEEK) {
-      setStartDate((prev) => addMonths(prev, -1));
-    } else if (range === Range.MONTH) {
-      setStartDate((prev) => addYears(prev, -1));
-    } else if (range === Range.QUARTER) {
+    } else if (range === Range.MONTH || Range.QUARTER) {
       setStartDate((prev) => addYears(prev, -1));
     }
   };
@@ -126,13 +114,9 @@ const Page: NextPage = () => {
   const handleDateChangeForwards = () => {
     if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, 1));
-    } else if (range === Range.DAY) {
+    } else if (range === Range.DAY || range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, 1));
-    } else if (range === Range.WEEK) {
-      setStartDate((prev) => addMonths(prev, 1));
-    } else if (range === Range.MONTH) {
-      setStartDate((prev) => addYears(prev, 1));
-    } else if (range === Range.QUARTER) {
+    } else if (range === Range.MONTH || range === Range.QUARTER) {
       setStartDate((prev) => addYears(prev, 1));
     }
   };
@@ -144,22 +128,23 @@ const Page: NextPage = () => {
     startDate.toDateString() === new Date().toDateString() ||
     range === Range.YEAR;
 
-  const chartData =
-    (() => {
-      if (range === Range.HOUR) {
-        return byHourQuery.data;
-      } else if (range === Range.DAY) {
-        return byDayQuery.data;
-      } else if (range === Range.WEEK) {
-        return byWeekQuery.data;
-      } else if (range === Range.MONTH) {
-        return byMonthQuery.data;
-      } else if (range === Range.QUARTER) {
-        return byQuarterQuery.data;
-      } else if (range === Range.YEAR) {
-        return byYearQuery.data;
-      }
-    })() ?? [];
+  const chartData = (() => {
+    if (range === Range.HOUR) {
+      return byHourQuery.data;
+    } else if (range === Range.DAY) {
+      return byDayQuery.data;
+    } else if (range === Range.WEEK) {
+      return byWeekQuery.data;
+    } else if (range === Range.MONTH) {
+      return byMonthQuery.data;
+    } else if (range === Range.QUARTER) {
+      return byQuarterQuery.data;
+    } else if (range === Range.YEAR) {
+      return byYearQuery.data;
+    } else {
+      return [];
+    }
+  })();
 
   const drillDown = (value: string) => {
     if (range === Range.DAY) {
@@ -187,6 +172,14 @@ const Page: NextPage = () => {
     }
   };
 
+  const isLoading =
+    byHourQuery.isFetching ||
+    byDayQuery.isFetching ||
+    byWeekQuery.isFetching ||
+    byMonthQuery.isFetching ||
+    byQuarterQuery.isFetching ||
+    byYearQuery.isFetching;
+
   return (
     <>
       <Head>
@@ -206,7 +199,11 @@ const Page: NextPage = () => {
         </header>
 
         <Main>
-          <MyBarChart data={chartData} drillDown={drillDown} />
+          {isLoading ? (
+            <span>Ładowanie</span>
+          ) : (
+            <MyBarChart data={chartData} drillDown={drillDown} />
+          )}
         </Main>
 
         <footer className="flex items-center w-full h-16 gap-4 px-4 justify-evenly">

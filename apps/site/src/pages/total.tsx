@@ -1,33 +1,19 @@
-import {
-  addDays,
-  addMonths,
-  addQuarters,
-  addWeeks,
-  addYears,
-  lightFormat,
-} from "date-fns";
+import { addDays, addMonths, addYears, lightFormat } from "date-fns";
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import React, { useState } from "react";
 
 import { BottomNavigation } from "../components/BottomNavigation";
+import { Main } from "../components/Main";
 import { Select } from "../components/Select";
+import { Range } from "../utils/enums";
 import { trpc } from "../utils/trpc";
 
 const MyBarChart = dynamic(
   () => import("../components/charts/MyBarChart").then((imp) => imp.MyBarChart),
   { ssr: false }
 );
-
-enum Range {
-  HOUR = "HOUR",
-  DAY = "DAY",
-  WEEK = "WEEK",
-  MONTH = "MONTH",
-  QUARTER = "QUARTER",
-  YEAR = "YEAR",
-}
 
 const RangeOptions = [
   { key: "range-options-hour", label: "Godzina", value: Range.HOUR },
@@ -48,12 +34,12 @@ const Title = {
 };
 
 const Subtitle = {
-  [Range.HOUR]: (date: Date) => `${date.toDateString()}`,
-  [Range.DAY]: (date: Date) => `${date.toDateString()}`,
-  [Range.WEEK]: (date: Date) => `${date.toDateString()}`,
-  [Range.MONTH]: (date: Date) => `${date.toDateString()}`,
-  [Range.QUARTER]: (date: Date) => `${date.toDateString()}`,
-  [Range.YEAR]: (date: Date) => `${date.toDateString()}`,
+  [Range.HOUR]: (date: Date) => date.toLocaleDateString(),
+  [Range.DAY]: (date: Date) => lightFormat(date, "yyyy-MM"),
+  [Range.WEEK]: (date: Date) => lightFormat(date, "yyyy-MM"),
+  [Range.MONTH]: (date: Date) => date.getFullYear(),
+  [Range.QUARTER]: (date: Date) => date.getFullYear(),
+  [Range.YEAR]: (date: Date) => date.toLocaleDateString(),
 };
 
 const Page: NextPage = () => {
@@ -61,42 +47,42 @@ const Page: NextPage = () => {
   const [startDate, setStartDate] = useState(new Date());
 
   const byHourQuery = trpc.total.byHour.useQuery(
-    { start: startDate },
+    { startDate },
     {
       enabled: range === Range.HOUR,
     }
   );
 
   const byDayQuery = trpc.total.byDay.useQuery(
-    { start: startDate },
+    { startDate },
     {
       enabled: range === Range.DAY,
     }
   );
 
   const byWeekQuery = trpc.total.byWeek.useQuery(
-    { start: startDate },
+    { startDate },
     {
       enabled: range === Range.WEEK,
     }
   );
 
   const byMonthQuery = trpc.total.byMonth.useQuery(
-    { start: startDate },
+    { startDate },
     {
       enabled: range === Range.MONTH,
     }
   );
 
   const byQuarterQuery = trpc.total.byQuarter.useQuery(
-    { start: startDate },
+    { startDate },
     {
       enabled: range === Range.QUARTER,
     }
   );
 
   const byYearQuery = trpc.total.byYear.useQuery(
-    { start: startDate },
+    { startDate },
     {
       enabled: range === Range.YEAR,
     }
@@ -115,13 +101,9 @@ const Page: NextPage = () => {
   const handleDateChangeBackwards = () => {
     if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, -1));
-    } else if (range === Range.DAY) {
-      setStartDate((prev) => addWeeks(prev, -1));
-    } else if (range === Range.WEEK) {
+    } else if (range === Range.DAY || range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, -1));
-    } else if (range === Range.MONTH) {
-      setStartDate((prev) => addQuarters(prev, -1));
-    } else if (range === Range.QUARTER) {
+    } else if (range === Range.MONTH || Range.QUARTER) {
       setStartDate((prev) => addYears(prev, -1));
     }
   };
@@ -129,13 +111,9 @@ const Page: NextPage = () => {
   const handleDateChangeForwards = () => {
     if (range === Range.HOUR) {
       setStartDate((prev) => addDays(prev, 1));
-    } else if (range === Range.DAY) {
-      setStartDate((prev) => addWeeks(prev, 1));
-    } else if (range === Range.WEEK) {
+    } else if (range === Range.DAY || range === Range.WEEK) {
       setStartDate((prev) => addMonths(prev, 1));
-    } else if (range === Range.MONTH) {
-      setStartDate((prev) => addQuarters(prev, 1));
-    } else if (range === Range.QUARTER) {
+    } else if (range === Range.MONTH || range === Range.QUARTER) {
       setStartDate((prev) => addYears(prev, 1));
     }
   };
@@ -144,6 +122,7 @@ const Page: NextPage = () => {
   const subtitle = Subtitle[range](startDate);
   const forwardDisabled =
     startDate.toDateString() === new Date().toDateString();
+
   const chartData = (() => {
     if (range === Range.HOUR) {
       return byHourQuery.data;
@@ -157,8 +136,44 @@ const Page: NextPage = () => {
       return byQuarterQuery.data;
     } else if (range === Range.YEAR) {
       return byYearQuery.data;
+    } else {
+      return [];
     }
   })();
+
+  const drillDown = (value: string) => {
+    if (range === Range.DAY) {
+      const [day, month] = value.split(".");
+
+      if (day && month) {
+        setRange(Range.HOUR);
+        setStartDate(
+          (prev) => new Date(`${prev.getFullYear()}-${month}-${day}`)
+        );
+      }
+    } else if (range === Range.YEAR) {
+      if (/\d{4}/.test(value)) {
+        setRange(Range.MONTH);
+      }
+    } else if (range === Range.MONTH) {
+      if (/\d{2}/.test(value)) {
+        setRange(Range.DAY);
+        setStartDate((prev) => new Date(`${prev.getFullYear()}-${value}-01`));
+      }
+    } else if (range === Range.QUARTER) {
+      if (/\d{1}/.test(value)) {
+        setRange(Range.MONTH);
+      }
+    }
+  };
+
+  const isLoading =
+    byHourQuery.isFetching ||
+    byDayQuery.isFetching ||
+    byWeekQuery.isFetching ||
+    byMonthQuery.isFetching ||
+    byQuarterQuery.isFetching ||
+    byYearQuery.isFetching;
 
   return (
     <>
@@ -177,9 +192,13 @@ const Page: NextPage = () => {
           {subtitle}
         </div>
 
-        <main className="flex flex-col flex-1">
-          <MyBarChart data={chartData} />
-        </main>
+        <Main>
+          {isLoading ? (
+            <span>Ładowanie</span>
+          ) : (
+            <MyBarChart data={chartData} drillDown={drillDown} />
+          )}
+        </Main>
 
         <footer className="flex items-center w-full h-24 gap-4 px-4 justify-evenly">
           <FooterButton onClick={handleDateChangeBackwards}>
