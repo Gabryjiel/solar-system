@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -12,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/joho/godotenv"
 )
 
 type Row struct {
-	power_node float64
+	power_now float64
 	energy_total float64
 	energy_today float64
 	alarm string
@@ -26,21 +25,23 @@ type Row struct {
 	timestamp time.Time
 }
 
-func init() {
+func main() {
 	err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-}
+	log.Println("[Collector] Env file loaded")
 
-func main() {
-	db, err := sql.Open("mysql", os.Getenv("DB_URL"))
+	db, err := sql.Open("postgres", os.Getenv("DB_URL"))
 
 	if err != nil {
 		panic(err.Error())
 	}
 	defer db.Close()
+	log.Println("[Collector] Database connected")
+
+	initDb(db)
 
 	ticker := time.Tick(10 * time.Second)
 	for range ticker {
@@ -51,9 +52,32 @@ func main() {
 			continue
 		}
 
-		insertQuery := getInsertQuery(row)
-
-		result, err := db.Exec(insertQuery)
+		result, err := db.Exec(
+			`INSERT INTO logs (
+			cover_sta_rssi,
+			timestamp,
+			energy_today,
+			energy_total,
+			power_now,
+			utime,
+			alarm			
+			) VALUES (
+			'?',
+			'?',
+			?,
+			?,
+			?,
+			?,
+			'?'
+			)`,
+			row.cover_sta_rssi,
+			row.timestamp,
+			row.energy_today,
+			row.energy_total,
+			row.power_now,
+			row.utime,
+			row.alarm,
+		)
 		if err != nil {
 			log.Println(err)
 		}
@@ -69,32 +93,22 @@ func main() {
 	}
 }
 
-func getInsertQuery(row Row) string {
-	return fmt.Sprintf(`INSERT INTO logs (
-			cover_sta_rssi,
-			timestamp,
-			energy_today,
-			energy_total,
-			power_now,
-			utime,
-			alarm			
-		) VALUES (
-			'%v',
-			'%v',
-			%v,
-			%v,
-			%v,
-			%v,
-			'%v'
-		);`,
-		row.cover_sta_rssi,
-		row.timestamp.Format(time.RFC3339),
-		row.energy_today,
-		row.energy_total,
-		row.power_node,
-		row.utime,
-		row.alarm,
-	)
+func initDb(db *sql.DB) {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS logs (
+		id SERIAL NOT NULL,
+		cover_sta_rssi VARCHAR(8),
+		timestamp timestamp,
+		energy_total double precision,
+		energy_today numeric(5, 2),
+		power_now numeric(6, 2),
+		utime VARCHAR(8),
+		alarm VARCHAR(8),
+		PRIMARY KEY (id)
+	)`)
+
+	if err != nil {
+		log.Println("[initDB] Failed to initialize database")
+	}
 }
 
 func getRow() (Row, error) {
@@ -150,7 +164,7 @@ func getRow() (Row, error) {
 	}
 
 	newRow := Row{
-		power_node: getFloatFromMap(keyMap, "webdata_now_p"),
+		power_now: getFloatFromMap(keyMap, "webdata_now_p"),
 		energy_today: getFloatFromMap(keyMap, "webdata_today_e"),
 		energy_total: getFloatFromMap(keyMap, "webdata_total_e"),
 		alarm: getStringFromMap(keyMap, "webdata_alarm"),
@@ -165,7 +179,7 @@ func getRow() (Row, error) {
 func getFloatFromMap(keyMap map[string]string, key string) float64 {
 	value, ok := keyMap[key]
 
-	if ok == false {
+	if !ok {
 		return 0
 	}
 
@@ -181,7 +195,7 @@ func getFloatFromMap(keyMap map[string]string, key string) float64 {
 func getStringFromMap(keyMap map[string]string, key string) string {
 	value, ok := keyMap[key]
 
-	if ok == false {
+	if !ok {
 		return ""
 	}
 
