@@ -26,17 +26,23 @@ type Row struct {
 }
 
 func main() {
-	err := godotenv.Load(".env")
+	workingDir, err := os.Getwd()
 
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal(err);
+	}
+
+	err = godotenv.Load(workingDir + "/.env")
+
+	if err != nil {
+		log.Fatal("Error loading .env file from", workingDir + "/.env")
 	}
 	log.Println("[Collector] Env file loaded")
 
 	db, err := sql.Open("postgres", os.Getenv("DB_URL"))
 
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 	defer db.Close()
 	log.Println("[Collector] Database connected")
