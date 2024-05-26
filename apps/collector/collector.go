@@ -43,7 +43,20 @@ func main() {
 
 	initDb(db)
 
-	ticker := time.Tick(10 * time.Second)
+	frequencyStr := os.Getenv("FREQ")
+	frequency := 10
+
+	if frequencyStr != "" {
+		value, err := strconv.Atoi(frequencyStr)
+
+		if err != nil {
+			log.Println("[Collector] Invalid FREQ value", frequencyStr, err)
+		} else {
+			frequency = value
+		}
+	}
+
+	ticker := time.Tick(time.Duration(frequency) * time.Second)
 	for range ticker {
 		row, err := getRow()
 
