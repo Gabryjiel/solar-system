@@ -16,26 +16,26 @@ import (
 )
 
 type Row struct {
-	power_now float64
-	energy_total float64
-	energy_today float64
-	alarm string
-	utime float64
+	power_now      float64
+	energy_total   float64
+	energy_today   float64
+	alarm          string
+	utime          float64
 	cover_sta_rssi string
-	timestamp time.Time
+	timestamp      time.Time
 }
 
 func main() {
 	workingDir, err := os.Getwd()
 
 	if err != nil {
-		log.Fatal(err);
+		log.Fatal(err)
 	}
 
 	err = godotenv.Load(workingDir + "/.env")
 
 	if err != nil {
-		log.Fatal("Error loading .env file from", workingDir + "/.env")
+		log.Fatal("Error loading .env file from", workingDir+"/.env")
 	}
 	log.Println("[Collector] Env file loaded")
 
@@ -110,7 +110,7 @@ func insertRow(db *sql.DB, row *Row) (int64, error) {
 		row.power_now,
 		row.utime,
 		row.alarm,
-		).Scan(&lastId)
+	).Scan(&lastId)
 
 	return lastId, err
 }
@@ -167,16 +167,16 @@ func getRow() (Row, error) {
 
 	splitBody := strings.Split(bodyStr, ";")
 
-	keyMap := map[string]string{}	
+	keyMap := map[string]string{}
 	for _, line := range splitBody {
 		varIndex := strings.Index(line, "var")
 		equalIndex := strings.Index(line, "=")
 
-		if (varIndex == -1 || equalIndex == -1) {
+		if varIndex == -1 || equalIndex == -1 {
 			continue
 		}
 
-		key := line[varIndex + 4:equalIndex - 1]
+		key := line[varIndex+4 : equalIndex-1]
 
 		startIndex := strings.Index(line, "\"") + 1
 		endIndex := strings.LastIndex(line, "\"")
@@ -187,13 +187,13 @@ func getRow() (Row, error) {
 	}
 
 	newRow := Row{
-		power_now: getFloatFromMap(keyMap, "webdata_now_p"),
-		energy_today: getFloatFromMap(keyMap, "webdata_today_e"),
-		energy_total: getFloatFromMap(keyMap, "webdata_total_e"),
-		alarm: getStringFromMap(keyMap, "webdata_alarm"),
-		utime: getFloatFromMap(keyMap, "webdata_utime"),
+		power_now:      getFloatFromMap(keyMap, "webdata_now_p"),
+		energy_today:   getFloatFromMap(keyMap, "webdata_today_e"),
+		energy_total:   getFloatFromMap(keyMap, "webdata_total_e"),
+		alarm:          getStringFromMap(keyMap, "webdata_alarm"),
+		utime:          getFloatFromMap(keyMap, "webdata_utime"),
 		cover_sta_rssi: getStringFromMap(keyMap, "cover_sta_rssi"),
-		timestamp: time.Now(),
+		timestamp:      time.Now(),
 	}
 
 	return newRow, nil
