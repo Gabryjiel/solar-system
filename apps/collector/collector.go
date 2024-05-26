@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type Row struct {
@@ -52,45 +52,48 @@ func main() {
 			continue
 		}
 
-		result, err := db.Exec(
-			`INSERT INTO logs (
-			cover_sta_rssi,
-			timestamp,
-			energy_today,
-			energy_total,
-			power_now,
-			utime,
-			alarm			
-			) VALUES (
-			'?',
-			'?',
-			?,
-			?,
-			?,
-			?,
-			'?'
-			)`,
-			row.cover_sta_rssi,
-			row.timestamp,
-			row.energy_today,
-			row.energy_total,
-			row.power_now,
-			row.utime,
-			row.alarm,
-		)
+		lastId, err := insertRow(db, &row)
+
 		if err != nil {
 			log.Println(err)
-		}
-
-		id, err := result.LastInsertId()
-
-		if err != nil {
-			log.Println("No last id")
 			continue
 		}
 
-		log.Println("Inserted row with id", id)
+		log.Println("Inserted row with id", lastId)
 	}
+}
+
+func insertRow(db *sql.DB, row *Row) (int64, error) {
+	var lastId int64
+
+	err := db.QueryRow(
+		`INSERT INTO logs (
+		cover_sta_rssi,
+		timestamp,
+		energy_today,
+		energy_total,
+		power_now,
+		utime,
+		alarm			
+		) VALUES (
+		$1,
+		$2,
+		$3,
+		$4,
+		$5,	
+		$6,
+		$7
+		) RETURNING id;`,
+		row.cover_sta_rssi,
+		row.timestamp.Format(time.RFC3339),
+		row.energy_today,
+		row.energy_total,
+		row.power_now,
+		row.utime,
+		row.alarm,
+		).Scan(&lastId)
+
+	return lastId, err
 }
 
 func initDb(db *sql.DB) {
@@ -104,25 +107,26 @@ func initDb(db *sql.DB) {
 		utime VARCHAR(8),
 		alarm VARCHAR(8),
 		PRIMARY KEY (id)
-	)`)
+	);`)
 
 	if err != nil {
-		log.Println("[initDB] Failed to initialize database")
+		log.Println("[initDB] Failed to initialize database: ", err.Error())
 	}
 }
 
 func getRow() (Row, error) {
 	client := &http.Client{}
-	request, err := http.NewRequest("GET", os.Getenv("SITE_URL"), nil)
+	request, err := http.NewRequest("GET", os.Getenv("STATUS_URL"), nil)
 	if err != nil {
 		log.Fatal("Could not create new request")
 	}
 
-	request.SetBasicAuth(os.Getenv("SITE_USER"), os.Getenv("SITE_PASSWORD"))
+	request.SetBasicAuth(os.Getenv("AUTH_USER"), os.Getenv("AUTH_PASSWORD"))
 
 	resp, err := client.Do(request)
 
 	if err != nil {
+		log.Println("EROR: ", os.Getenv("STATUS_URL"))
 		return Row{}, errors.New("Could not get status page")
 	}
 
