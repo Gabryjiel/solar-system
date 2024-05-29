@@ -6,56 +6,83 @@
 
 body {
 	display: flex;
-	background: red;
+	background: whitesmoke;
 	width: 100dvw;
 	height: 100dvh;
 	flex-direction: column;
 }
 
+span {
+	color: #ccc;
+}
+
+a {
+	text-decoration: none;
+}
+
 header {
 	width: 100%;
-	background-color: beige;
+	background-color: darkslategray;
 	font-size: larger;
 	text-align: center;
 	font-weight: bolder;
 	line-height: 5vh;
+	text-decoration: none;
+	color: black;
 }
 
 main {
 	width: 100%;
 	flex: 1 0 0;
-	background-color: palegreen;
+	background-color: black;
 	padding: 5px;
-}
-
-nav {
-	width: 100%;
-	height: 10vh;
-	background-color: grey;
 	display: flex;
-	justify-content: space-evenly;
-}
-
-nav a {
-	display: flex;
-	border: 1px solid black;
-	flex: 1 0 0;
-	font-weight: bolder;
-	font-size: larger;
-	text-decoration: none;
-	color: black;
-	justify-content: center;
+	flex-direction: column;
 	align-items: center;
+	justify-content: space-around;
 }
 
-.block {
+.box {
 	display: flex;
 	flex-direction: column;
 	text-align: center;
 	margin-bottom: 10px;
+	color: whitesmoke;
 }
 
-.block span {
+.box span {
 	font-weight: bold;
 	font-size: large;
 }
+
+.block {
+	height: 25%;
+	width: 70%;
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+	margin-bottom: 10px;
+	border: 10px solid darkslategrey;
+	border-radius: 20px;
+	text-decoration: none;
+	background-color: #333;
+}
+
+.block div:nth-child(1) {
+	height: 20%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: large;
+	font-weight: bold;
+}
+
+.block div:nth-child(2) {
+	flex: 1 0 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 4rem;
+	font-weight: bolder;
+}
+

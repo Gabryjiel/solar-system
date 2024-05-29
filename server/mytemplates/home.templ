@@ -9,37 +9,47 @@ import (
 
 templ Home(log internal.Row) {
 @Layout("Homepage") {
-<div class="block">
-	<div>
-		<span>Czas ostatniego pomiaru</span>
+<main>
+	<div class="box">
+		<div>
+			<span>Czas ostatniego pomiaru</span>
+		</div>
+		<div>
+			<span>
+				{ log.Timestamp.Format(time.DateTime) }
+			</span>
+		</div>
 	</div>
-	<div>
-		{ log.Timestamp.Format(time.DateTime) }
-	</div>
-</div>
-<div class="block">
-	<div>
-		<span>Energia dzisiaj</span>
-	</div>
-	<div>
-		{ strconv.FormatFloat(log.Energy_today, 'f', -1, 64) }
-	</div>
-</div>
-<div class="block">
-	<div>
-		<span>Energia całość</span>
-	</div>
-	<div>
-		{ strconv.FormatFloat(log.Energy_total, 'f', -1, 64) }
-	</div>
-</div>
-<div class="block">
-	<div>
-		<span>Moc teraz</span>
-	</div>
-	<div>
-		{ strconv.FormatFloat(log.Power_now, 'f', -1, 64) }
-	</div>
-</div>
+	<a href="/energy" class="block">
+		<div>
+			<span class="block-title">Energia dzisiaj [kWh]</span>
+		</div>
+		<div>
+			<span class="block-value">
+				{ strconv.FormatFloat(log.Energy_today, 'f', -1, 64) }
+			</span>
+		</div>
+	</a>
+	<a href="/total" class="block">
+		<div>
+			<span class="block-title">Energia całość [kWh]</span>
+		</div>
+		<div>
+			<span class="block-value">
+				{ strconv.FormatFloat(log.Energy_total, 'f', -1, 64) }
+			</span>
+		</div>
+	</a>
+	<a href="/power" class="block">
+		<div>
+			<span class="block-title">Moc teraz [W]</span>
+		</div>
+		<div>
+			<span class="block-value">
+				{ strconv.FormatFloat(log.Power_now, 'f', -1, 64) }
+			</span>
+		</div>
+	</a>
+</main>
 }
 }
