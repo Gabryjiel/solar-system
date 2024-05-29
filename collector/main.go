@@ -11,19 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Gabryjiel/solar-system/internal"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
-
-type Row struct {
-	power_now      float64
-	energy_total   float64
-	energy_today   float64
-	alarm          string
-	utime          float64
-	cover_sta_rssi string
-	timestamp      time.Time
-}
 
 func main() {
 	workingDir, err := os.Getwd()
@@ -82,34 +73,34 @@ func main() {
 	}
 }
 
-func insertRow(db *sql.DB, row *Row) (int64, error) {
+func insertRow(db *sql.DB, row *internal.Row) (int64, error) {
 	var lastId int64
 
 	err := db.QueryRow(
 		`INSERT INTO logs (
 		cover_sta_rssi,
 		timestamp,
-		energy_today,
 		energy_total,
+		energy_today,
 		power_now,
 		utime,
-		alarm			
+		alarm
 		) VALUES (
 		$1,
 		$2,
 		$3,
 		$4,
-		$5,	
+		$5,
 		$6,
 		$7
 		) RETURNING id;`,
-		row.cover_sta_rssi,
-		row.timestamp.Format(time.RFC3339),
-		row.energy_today,
-		row.energy_total,
-		row.power_now,
-		row.utime,
-		row.alarm,
+		row.Cover_sta_rssi,
+		row.Timestamp.Format(time.RFC3339),
+		row.Energy_total,
+		row.Energy_today,
+		row.Power_now,
+		row.Utime,
+		row.Alarm,
 	).Scan(&lastId)
 
 	return lastId, err
@@ -133,7 +124,7 @@ func initDb(db *sql.DB) {
 	}
 }
 
-func getRow() (Row, error) {
+func getRow() (internal.Row, error) {
 	client := &http.Client{}
 	request, err := http.NewRequest("GET", os.Getenv("STATUS_URL"), nil)
 	if err != nil {
@@ -146,13 +137,13 @@ func getRow() (Row, error) {
 
 	if err != nil {
 		log.Println("EROR: ", os.Getenv("STATUS_URL"))
-		return Row{}, errors.New("Could not get status page")
+		return internal.Row{}, errors.New("Could not get status page")
 	}
 
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		return Row{}, errors.New("Could not get response body")
+		return internal.Row{}, errors.New("Could not get response body")
 	}
 
 	bodyStr := string(body)
@@ -186,14 +177,14 @@ func getRow() (Row, error) {
 		keyMap[key] = value
 	}
 
-	newRow := Row{
-		power_now:      getFloatFromMap(keyMap, "webdata_now_p"),
-		energy_today:   getFloatFromMap(keyMap, "webdata_today_e"),
-		energy_total:   getFloatFromMap(keyMap, "webdata_total_e"),
-		alarm:          getStringFromMap(keyMap, "webdata_alarm"),
-		utime:          getFloatFromMap(keyMap, "webdata_utime"),
-		cover_sta_rssi: getStringFromMap(keyMap, "cover_sta_rssi"),
-		timestamp:      time.Now(),
+	newRow := internal.Row{
+		Power_now:      getFloatFromMap(keyMap, "webdata_now_p"),
+		Energy_today:   getFloatFromMap(keyMap, "webdata_today_e"),
+		Energy_total:   getFloatFromMap(keyMap, "webdata_total_e"),
+		Alarm:          getStringFromMap(keyMap, "webdata_alarm"),
+		Utime:          getFloatFromMap(keyMap, "webdata_utime"),
+		Cover_sta_rssi: getStringFromMap(keyMap, "cover_sta_rssi"),
+		Timestamp:      time.Now(),
 	}
 
 	return newRow, nil
