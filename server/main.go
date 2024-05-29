@@ -36,13 +36,11 @@ func main() {
 	defer db.Close()
 	log.Println("[Collector] Database connected")
 
-	staticHandler := http.StripPrefix(
-		"/dist",
-		http.FileServer(http.Dir("./templates/dist")),
-	)
+	fileServer := http.FileServer(http.Dir("./server/static"))
+	staticHandler := http.StripPrefix("/static", fileServer)
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /dist/", staticHandler)
+	mux.Handle("GET /static/", staticHandler)
 	mux.Handle("GET /", handlerHomepage(db))
 	err = http.ListenAndServe(":8888", mux)
 

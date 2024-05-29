@@ -1,22 +1,45 @@
 package mytemplates
 
 import (
-	"strconv"
+"strconv"
+"time"
 
-	"github.com/Gabryjiel/solar-system/internal"
+"github.com/Gabryjiel/solar-system/internal"
 )
 
 templ Home(log internal.Row) {
-<div>
-	{ strconv.FormatFloat(log.Energy_today, 'f', -1, 64) }
+@Layout("Homepage") {
+<div class="block">
+	<div>
+		<span>Czas ostatniego pomiaru</span>
+	</div>
+	<div>
+		{ log.Timestamp.Format(time.DateTime) }
+	</div>
 </div>
-<div>
-	{ strconv.FormatFloat(log.Energy_total, 'f', -1, 64) }
+<div class="block">
+	<div>
+		<span>Energia dzisiaj</span>
+	</div>
+	<div>
+		{ strconv.FormatFloat(log.Energy_today, 'f', -1, 64) }
+	</div>
 </div>
-<div>
-	{ strconv.FormatFloat(log.Power_now, 'f', -1, 64) }
+<div class="block">
+	<div>
+		<span>Energia całość</span>
+	</div>
+	<div>
+		{ strconv.FormatFloat(log.Energy_total, 'f', -1, 64) }
+	</div>
 </div>
-<div>
-	{log.Timestamp.String()}
+<div class="block">
+	<div>
+		<span>Moc teraz</span>
+	</div>
+	<div>
+		{ strconv.FormatFloat(log.Power_now, 'f', -1, 64) }
+	</div>
 </div>
+}
 }

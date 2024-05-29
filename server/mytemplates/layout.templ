@@ -1,0 +1,30 @@
+package mytemplates
+
+templ Layout(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<title>{ title }</title>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="robots" content="index, follow"/>
+			<meta name="revisit-after" content="7 days"/>
+			<meta name="language" content="English"/>
+			<link href="/static/style.css" rel="stylesheet"/>
+		</head>
+		<body>
+			<header>
+				<span>Solar-System</span>
+			</header>
+			<main>
+				{ children... }
+			</main>
+			<nav>
+				<a href="/">Teraz</a>
+				<a href="/energy">Energia</a>
+				<a href="/power">Moc</a>
+				<a href="/total">Suma</a>
+			</nav>
+		</body>
+	</html>
+}
