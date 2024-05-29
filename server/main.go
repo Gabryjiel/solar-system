@@ -41,6 +41,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/", staticHandler)
+	mux.Handle("GET /energy", handleEnergy(db))
+	mux.Handle("GET /total", handleTotal(db))
+	mux.Handle("GET /power", handlePower(db))
 	mux.Handle("GET /", handlerHomepage(db))
 	err = http.ListenAndServe(":8888", mux)
 
@@ -74,3 +77,21 @@ func handlerHomepage(db *sql.DB) http.Handler {
 		_ = mytemplates.Home(log).Render(context.Background(), res)	
 	})
 }
+
+func handleEnergy(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		_ = mytemplates.Energy().Render(context.Background(), res)
+	})
+}
+func handleTotal(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		_ = mytemplates.Energy().Render(context.Background(), res)
+	})
+}
+
+func handlePower(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		_ = mytemplates.Energy().Render(context.Background(), res)
+	})
+}
+
