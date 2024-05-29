@@ -1,0 +1,22 @@
+package mytemplates
+
+import (
+	"strconv"
+
+	"github.com/Gabryjiel/solar-system/internal"
+)
+
+templ Home(log internal.Row) {
+<div>
+	{ strconv.FormatFloat(log.Energy_today, 'f', -1, 64) }
+</div>
+<div>
+	{ strconv.FormatFloat(log.Energy_total, 'f', -1, 64) }
+</div>
+<div>
+	{ strconv.FormatFloat(log.Power_now, 'f', -1, 64) }
+</div>
+<div>
+	{log.Timestamp.String()}
+</div>
+}
