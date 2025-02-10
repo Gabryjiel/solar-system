@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  collector:
+    image: solar-system/collector
+    container_name: collector
+    working_dir: /usr/src/app
+    command: "./collector"
+    env_file:
+      - .env
+    environment:
+      - FREQ=${FREQ}
+      - STATUS_URL=${STATUS_URL}
+      - DB_URL=${DB_URL}
+
+  database:
+    image: "postgres:17.2-alpine3.21"
+    container_name: db
+    shm_size: 128mb
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
