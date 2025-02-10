@@ -16,32 +16,72 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	workingDir, err := os.Getwd()
+const (
+	ENV_STATUS_URL    = "STATUS_URL"
+	ENV_FREQUENCY     = "FREQ"
+	ENV_DB_URL        = "DB_URL"
+	ENV_AUTH_USER     = "AUTH_USER"
+	ENV_AUTH_PASSWORD = "AUTH_PASSWORD"
+)
 
+func main() {
+	loadEnvars()
+
+	db := getDbClient()
+	defer db.Close()
+	initDb(db)
+
+	ticker := time.Tick(time.Duration(getFrequency()) * time.Second)
+	for range ticker {
+		statusPage, err := getStatusPage()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		row := parseStatusPage(statusPage)
+
+		lastId, err := insertRow(db, &row)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		log.Println("Inserted row with id", lastId)
+	}
+}
+
+func loadEnvars() {
+	requiredEnvars := []string{
+		os.Getenv(ENV_STATUS_URL),
+		os.Getenv(ENV_DB_URL),
+		os.Getenv(ENV_AUTH_USER),
+		os.Getenv(ENV_AUTH_PASSWORD),
+	}
+
+	for _, envar := range requiredEnvars {
+		if envar == "" {
+			err := godotenv.Load()
+			if err != nil {
+				log.Fatalln("Error loading .env file")
+			}
+			break
+		}
+	}
+}
+
+func getDbClient() *sql.DB {
+	db, err := sql.Open("postgres", os.Getenv(ENV_DB_URL))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = godotenv.Load(workingDir + "/.env")
+	return db
+}
 
-	if err != nil {
-		log.Fatal("Error loading .env file from", workingDir+"/.env")
-	}
-	log.Println("[Collector] Env file loaded")
-
-	db, err := sql.Open("postgres", os.Getenv("DB_URL"))
-
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	log.Println("[Collector] Database connected")
-
-	initDb(db)
-
-	frequencyStr := os.Getenv("FREQ")
-	frequency := 10
+func getFrequency() int {
+	frequencyStr := os.Getenv(ENV_FREQUENCY)
+	frequency := 60
 
 	if frequencyStr != "" {
 		value, err := strconv.Atoi(frequencyStr)
@@ -53,24 +93,7 @@ func main() {
 		}
 	}
 
-	ticker := time.Tick(time.Duration(frequency) * time.Second)
-	for range ticker {
-		row, err := getRow()
-
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		lastId, err := insertRow(db, &row)
-
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		log.Println("Inserted row with id", lastId)
-	}
+	return frequency
 }
 
 func insertRow(db *sql.DB, row *internal.Row) (int64, error) {
@@ -124,30 +147,32 @@ func initDb(db *sql.DB) {
 	}
 }
 
-func getRow() (internal.Row, error) {
+func getStatusPage() (string, error) {
 	client := &http.Client{}
-	request, err := http.NewRequest("GET", os.Getenv("STATUS_URL"), nil)
+	request, err := http.NewRequest("GET", os.Getenv(ENV_STATUS_URL), nil)
 	if err != nil {
 		log.Fatal("Could not create new request")
 	}
 
-	request.SetBasicAuth(os.Getenv("AUTH_USER"), os.Getenv("AUTH_PASSWORD"))
+	request.SetBasicAuth(os.Getenv(ENV_AUTH_USER), os.Getenv(ENV_AUTH_PASSWORD))
 
 	resp, err := client.Do(request)
 
 	if err != nil {
-		log.Println("EROR: ", os.Getenv("STATUS_URL"))
-		return internal.Row{}, errors.New("Could not get status page")
+		log.Println("EROR: ", os.Getenv(ENV_STATUS_URL))
+		return "", errors.New("Could not get status page")
 	}
 
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		return internal.Row{}, errors.New("Could not get response body")
+		return "", errors.New("Could not get response body")
 	}
 
-	bodyStr := string(body)
+	return string(body), nil
+}
 
+func parseStatusPage(bodyStr string) internal.Row {
 	startText := "var webdata_sn"
 	endText := "function initPageText"
 	startIndex := strings.Index(bodyStr, startText)
@@ -187,7 +212,7 @@ func getRow() (internal.Row, error) {
 		Timestamp:      time.Now(),
 	}
 
-	return newRow, nil
+	return newRow
 }
 
 func getFloatFromMap(keyMap map[string]string, key string) float64 {
