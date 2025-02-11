@@ -1,6 +1,6 @@
 services:
   collector:
-    image: "solar-system/collector:latest"
+    image: "ghcr.io/gabryjiel/solar-system/collector:master"
     container_name: collector
     stdin_open: true
     tty: true
