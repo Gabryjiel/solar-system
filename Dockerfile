@@ -12,8 +12,8 @@ RUN go build ./collector/main.go
 
 # Production
 
-FROM golang:1.23.6-alpine3.21 AS prod
+FROM alpine:3.21 AS prod
 WORKDIR /usr/src/app
 
 COPY --from=build /usr/src/app/main /usr/src/app/collector
-CMD ["./collector"]
+ENTRYPOINT ["./collector"]
