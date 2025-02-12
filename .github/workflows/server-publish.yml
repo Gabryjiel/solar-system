@@ -10,14 +10,16 @@ on:
     branches: ["master"]
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
-  pull_request:
-    branches: ["master"]
+    paths:
+      - "server/**"
 
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}/collector
+  IMAGE_NAME: ${{ github.repository }}/server
+  DOCKERFILE: server/Dockerfile
+  PLATFORMS: linux/arm/v7
 
 jobs:
   build:
@@ -72,7 +74,8 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
-          platforms: linux/arm/v7
+          file: ${{ env.DOCKERFILE }}
+          platforms: ${{ env.PLATFORMS }}
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
