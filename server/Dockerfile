@@ -1,16 +1,11 @@
-# Generate templ
-FROM ghcr.io/a-h/templ:latest AS generate
-WORKDIR /app
-COPY --chown=65532:65532 . .
-RUN ["templ", "generate"]
-
-
 # Build
 FROM golang:1.23.6-alpine3.21 AS build
 WORKDIR /usr/src/app
 COPY go.mod go.sum ./
+RUN go install github.com/a-h/templ/cmd/templ@latest
 RUN go mod download && go mod verify
-COPY --from=generate /app .
+COPY . .
+RUN ["templ", "generate"]
 RUN go build ./server/main.go
 
 
