@@ -12,3 +12,18 @@ type Row struct {
 	Cover_sta_rssi string
 	Timestamp      time.Time
 }
+
+type TimeValue struct {
+	Key int
+	Value float64
+}
+
+func StartOfDay(datetime time.Time) time.Time {
+	year, month, day := datetime.Date()
+	return time.Date(year, month, day, 0, 0, 0, 0, datetime.Location())
+}
+
+func EndOfDay(datetime time.Time) time.Time {
+	year, month, day := datetime.Date()
+	return time.Date(year, month, day, 23, 59, 59, 0, datetime.Location())
+}

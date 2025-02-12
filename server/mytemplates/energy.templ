@@ -1,6 +1,12 @@
 package mytemplates
 
-templ Energy() {
+type EnergyTemplProps struct {
+	Key string
+	Value string
+	Delta string
+}
+
+templ Energy(data []EnergyTemplProps) {
 @Layout("Energia") {
 <a href="/">
 	<header>
@@ -9,6 +15,29 @@ templ Energy() {
 		</span>
 	</header>
 </a>
-<main></main>
+<main>
+	<form method="GET">
+		<input type="date" name="start" />
+		<button type="submit">Przejdź</button>
+	</form>
+	<table>
+		<thead>
+			<tr>
+				<th>Godzina</th>
+				<th>Energia [kWh]</th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, item := range data {
+				<tr>
+					<td>{ item.Key }</td>
+					<td>{ item.Value } ({ item.Delta })</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</main>
+<footer>
+</footer>
 }
 }
