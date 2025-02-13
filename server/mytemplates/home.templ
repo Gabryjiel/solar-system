@@ -1,55 +1,40 @@
 package mytemplates
 
 import (
-"strconv"
-"time"
-
-"github.com/Gabryjiel/solar-system/internal"
+	"github.com/Gabryjiel/solar-system/internal"
+	"strconv"
+	"time"
 )
 
 templ Home(log internal.Row) {
-@Layout("Homepage") {
-<main>
-	<div class="box">
-		<div>
-			<span>Czas ostatniego pomiaru</span>
-		</div>
-		<div>
-			<span>
-				{ log.Timestamp.Format(time.DateTime) }
-			</span>
-		</div>
-	</div>
-	<a href="/energy" class="block">
-		<div>
-			<span class="block-title">Energia dzisiaj [kWh]</span>
-		</div>
-		<div>
-			<span class="block-value">
-				{ strconv.FormatFloat(log.Energy_today, 'f', -1, 64) }
-			</span>
-		</div>
-	</a>
-	<a href="/total" class="block">
-		<div>
-			<span class="block-title">Energia całość [kWh]</span>
-		</div>
-		<div>
-			<span class="block-value">
-				{ strconv.FormatFloat(log.Energy_total, 'f', -1, 64) }
-			</span>
-		</div>
-	</a>
-	<a href="/power" class="block">
-		<div>
-			<span class="block-title">Moc teraz [W]</span>
-		</div>
-		<div>
-			<span class="block-value">
-				{ strconv.FormatFloat(log.Power_now, 'f', -1, 64) }
-			</span>
-		</div>
-	</a>
-</main>
+	@Layout("Homepage") {
+		<main>
+			<div class="box">
+				<div>
+					<span>Czas ostatniego pomiaru</span>
+				</div>
+				<div>
+					<span>
+						{ log.Timestamp.Format(time.DateTime) }
+					</span>
+				</div>
+			</div>
+			@HomeCard("/energy", "Energia dzisiaj [kWh]", log.Energy_today)
+			@HomeCard("/total", "Energia całość [kWh]", log.Energy_total)
+			@HomeCard("/power", "Moc teraz [W]", log.Power_now)
+		</main>
+	}
 }
+
+templ HomeCard(href, label string, value float64) {
+	<a href={ templ.URL(href) } class="block">
+		<div>
+			<span class="block-title">{ label }</span>
+		</div>
+		<div>
+			<span class="block-value">
+				{ strconv.FormatFloat(value, 'f', -1, 64) }
+			</span>
+		</div>
+	</a>
 }
