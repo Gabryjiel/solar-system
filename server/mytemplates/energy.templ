@@ -32,13 +32,15 @@ templ Energy(data []EnergyTemplProps) {
 					<tr>
 						<th>Godzina</th>
 						<th>Energia [kWh]</th>
+						<th>Delta [kWh]</th>
 					</tr>
 				</thead>
 				<tbody>
 					for _, item := range data {
 						<tr>
 							<th>{ item.Key }</th>
-							<td>{ item.Value } ({ item.Delta })</td>
+							<td>{ item.Value }</td>
+							<td>{ item.Delta }</td>
 						</tr>
 					}
 				</tbody>
