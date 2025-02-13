@@ -87,68 +87,33 @@ func handlerHomepage(db *sql.DB) http.Handler {
 func handleEnergy(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		now := time.Now()
-		start := req.URL.Query().Get("start")
-		end := req.URL.Query().Get("end")
+		start := utils.GetStringParamFormQuery(req, "start", now.Format(time.DateOnly))
+		end := utils.GetStringParamFormQuery(req, "end", now.AddDate(0, 0, 1).Format(time.DateOnly))
+		interval := utils.GetStringParamFormQuery(req, "interval", "hour")
 
-		if start == "" {
-			start = internal.StartOfDay(now).Format(time.RFC1123)
-		}
-		if end == "" {
-			end = internal.EndOfDay(now).Format(time.RFC1123)
-		}
+		data := handlers.GeneralGetBy(db, "energy_today", interval, start, end)
 
-		rows, err := db.Query(`
-			SELECT max(energy_today), EXTRACT(HOUR from timestamp) 
-			FROM logs
-			WHERE timestamp > $1 AND timestamp < $2
-			GROUP BY EXTRACT(HOUR from timestamp);`,
-			start,
-			end,
-		)
+		newData := make([]mytemplates.EnergyTemplProps, len(data))
 
-		if err != nil {
-			log.Println("[Handler] Failed: ", err)
-			return
-		}
-
-		data := make([]internal.TimeValue, 0)
-
-		for rows.Next() {
-			var entry internal.TimeValue
-			err = rows.Scan(&entry.Value, &entry.Key)
-
-			if err != nil {
-				log.Println("[Handler] Failed: ", err)
-				continue
-			}
-
-			data = append(data, entry)
-		}
-
-		dataStr := make([]mytemplates.EnergyTemplProps, len(data))
-		for index, item := range data {
-			key := strconv.Itoa(item.Key + 1)
-
-			if len(key) < 2 {
-				key = "0" + key
-			}
-
-			prevValue := 0.0
-			if index > 0 {
-				prevValue = data[index-1].Value
-			}
-
-			delta := item.Value - prevValue
-			dataStr[index].Key = key + ":00"
-			dataStr[index].Value = strconv.FormatFloat(item.Value, 'f', 2, 64)
-			dataStr[index].Delta = strconv.FormatFloat(delta, 'f', 2, 64)
+		prevValue := 0.0
+		for i := 0; i < len(data); i++ {
+			delta := data[i].Value - prevValue
+			sign := ""
 
 			if delta > 0 {
-				dataStr[index].Delta = "+" + dataStr[index].Delta
+				sign = "+"
 			}
+
+			newData[i] = mytemplates.EnergyTemplProps{
+				Key:   data[i].Date,
+				Value: strconv.FormatFloat(data[i].Value, 'f', 2, 64),
+				Delta: sign + strconv.FormatFloat(delta, 'f', 2, 64),
+			}
+
+			prevValue = data[i].Value
 		}
 
-		_ = mytemplates.Energy(dataStr).Render(context.Background(), res)
+		_ = mytemplates.Energy(newData).Render(context.Background(), res)
 	})
 }
 

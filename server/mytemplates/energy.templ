@@ -1,43 +1,49 @@
 package mytemplates
 
 type EnergyTemplProps struct {
-	Key string
+	Key   string
 	Value string
 	Delta string
 }
 
 templ Energy(data []EnergyTemplProps) {
-@Layout("Energia") {
-<a href="/">
-	<header>
-		<span>
-			Powrót do strony głównej
-		</span>
-	</header>
-</a>
-<main>
-	<form method="GET">
-		<input type="date" name="start" />
-		<button type="submit">Przejdź</button>
-	</form>
-	<table>
-		<thead>
-			<tr>
-				<th>Godzina</th>
-				<th>Energia [kWh]</th>
-			</tr>
-		</thead>
-		<tbody>
-			for _, item := range data {
-				<tr>
-					<td>{ item.Key }</td>
-					<td>{ item.Value } ({ item.Delta })</td>
-				</tr>
-			}
-		</tbody>
-	</table>
-</main>
-<footer>
-</footer>
-}
+	@Layout("Energia") {
+		<a href="/">
+			<header>
+				<span>
+					Powrót do strony głównej
+				</span>
+			</header>
+		</a>
+		<main>
+			<form method="GET">
+				<input type="datetime-local" name="start"/>
+				<input type="datetime-local" name="end"/>
+				<select name="interval">
+					<option value="hour">Godzina</option>
+					<option value="day">Dzień</option>
+					<option value="month">Miesiąc</option>
+					<option value="year">Rok</option>
+				</select>
+				<button type="submit">Przejdź</button>
+			</form>
+			<table id="datatable">
+				<thead>
+					<tr>
+						<th>Godzina</th>
+						<th>Energia [kWh]</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, item := range data {
+						<tr>
+							<th>{ item.Key }</th>
+							<td>{ item.Value } ({ item.Delta })</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</main>
+		<footer></footer>
+	}
 }
