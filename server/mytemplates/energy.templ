@@ -1,51 +1,47 @@
 package mytemplates
 
-type EnergyTemplProps struct {
-	Key   string
-	Value string
-	Delta string
-}
+import "github.com/Gabryjiel/solar-system/server/utils"
 
-templ Energy(data []EnergyTemplProps) {
-	@Layout("Energia") {
-		<a href="/">
-			<header>
-				<span>
-					Powrót do strony głównej
-				</span>
-			</header>
-		</a>
-		<main>
-			<form method="GET">
-				<input type="datetime-local" name="start"/>
-				<input type="datetime-local" name="end"/>
-				<select name="interval">
-					<option value="hour">Godzina</option>
-					<option value="day">Dzień</option>
-					<option value="month">Miesiąc</option>
-					<option value="year">Rok</option>
-				</select>
-				<button type="submit">Przejdź</button>
-			</form>
-			<table id="datatable">
-				<thead>
-					<tr>
-						<th>Godzina</th>
-						<th>Energia [kWh]</th>
-						<th>Delta [kWh]</th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, item := range data {
-						<tr>
-							<th>{ item.Key }</th>
-							<td>{ item.Value }</td>
-							<td>{ item.Delta }</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-		</main>
-		<footer></footer>
-	}
+templ Energy(data []utils.DataDeltaValue) {
+@Layout("Energia") {
+<a href="/">
+  <header>
+    <span>
+      Powrót do strony głównej
+    </span>
+  </header>
+</a>
+<main>
+  <form method="GET">
+    <input type="datetime-local" name="start" />
+    <input type="datetime-local" name="end" />
+    <select name="interval">
+      <option value="hour">Godzina</option>
+      <option value="day">Dzień</option>
+      <option value="month">Miesiąc</option>
+      <option value="year">Rok</option>
+    </select>
+    <button type="submit">Przejdź</button>
+  </form>
+  <table id="datatable">
+    <thead>
+      <tr>
+        <th>Godzina</th>
+        <th>Energia [kWh]</th>
+        <th>Delta [kWh]</th>
+      </tr>
+    </thead>
+    <tbody>
+      for _, item := range data {
+      <tr>
+        <th class="item-date">{ item.Date }</th>
+        <td class="item-value">{ item.Value }</td>
+        <td class="item-delta">{ item.Delta }</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+</main>
+<footer></footer>
+}
 }

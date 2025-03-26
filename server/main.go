@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/Gabryjiel/solar-system/internal"
@@ -93,26 +92,7 @@ func handleEnergy(db *sql.DB) http.Handler {
 
 		data := handlers.GeneralGetBy(db, "energy_today", interval, start, end)
 
-		newData := make([]mytemplates.EnergyTemplProps, len(data))
-
-		prevValue := 0.0
-		for i := 0; i < len(data); i++ {
-			delta := data[i].Value - prevValue
-			sign := ""
-
-			if delta > 0 {
-				sign = "+"
-			}
-
-			newData[i] = mytemplates.EnergyTemplProps{
-				Key:   data[i].Date,
-				Value: strconv.FormatFloat(data[i].Value, 'f', 2, 64),
-				Delta: sign + strconv.FormatFloat(delta, 'f', 2, 64),
-			}
-
-			prevValue = data[i].Value
-		}
-
+		newData := utils.AddDelta(data)
 		_ = mytemplates.Energy(newData).Render(context.Background(), res)
 	})
 }
