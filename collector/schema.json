@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "db_url": {
+      "type": "string"
+    },
+    "frequency": {
+      "type": "number",
+      "description": "In seconds"
+    },
+    "devices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status_url": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status_url",
+          "name",
+          "username",
+          "password"
+        ]
+      }
+    }
+  }
+}

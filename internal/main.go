@@ -11,10 +11,11 @@ type Row struct {
 	Utime          float64
 	Cover_sta_rssi string
 	Timestamp      time.Time
+	Name           string
 }
 
 type TimeValue struct {
-	Key int
+	Key   int
 	Value float64
 }
 
