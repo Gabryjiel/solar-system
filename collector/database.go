@@ -8,7 +8,7 @@ import (
 )
 
 func getDBClient(config Config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", config.DBUrl)
+	db, err := sql.Open("sqlite3", config.DBUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -59,16 +59,15 @@ func insertRow(db *sql.DB, row *internal.Row) (int64, error) {
 
 func initDB(db *sql.DB) error {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS logs (
-		id SERIAL NOT NULL,
-		cover_sta_rssi VARCHAR(8),
-		timestamp timestamp,
-		energy_total double precision,
-		energy_today numeric(5, 2),
-		power_now numeric(6, 2),
-		utime VARCHAR(8),
-		alarm VARCHAR(8),
-		name VARCHAR(32),
-		PRIMARY KEY (id)
+		id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+		cover_sta_rssi TEXT,
+		"timestamp" TEXT,
+		energy_total REAL,
+		energy_today REAL,
+		power_now REAL,
+		utime TEXT,
+		alarm TEXT,
+		name TEXT
 	);`)
 
 	return err
