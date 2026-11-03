@@ -15,7 +15,7 @@ import (
 	"github.com/Gabryjiel/solar-system/server/mytemplates"
 	"github.com/Gabryjiel/solar-system/server/utils"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 	}
 	log.Println("[Collector] Env file loaded")
 
-	db, err := sql.Open("postgres", os.Getenv("DB_URL"))
+	db, err := sql.Open("sqlite", os.Getenv("DB_URL"))
 
 	if err != nil {
 		panic(err)

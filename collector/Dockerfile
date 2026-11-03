@@ -1,5 +1,5 @@
 # collector/Dockerfile (multi-arch)
-FROM --platform=$BUILDPLATFORM golang:1.23.6-alpine3.21 AS build
+FROM --platform=$BUILDPLATFORM golang:1.26 AS build
 ARG TARGETOS TARGETARCH
 WORKDIR /usr/src/app
 
@@ -8,9 +8,12 @@ RUN go mod download && go mod verify
 
 COPY collector/ ./collector/
 COPY internal/ ./internal/
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o collector ./collector
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
+    go build -trimpath -ldflags="-s -w" -o /usr/src/app/bin/collector ./collector
 
-FROM alpine:3.21
-WORKDIR /usr/src/app
-COPY --from=build /usr/src/app/collector .
+FROM scratch
+WORKDIR /app
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build /usr/src/app/bin/collector ./collector
+COPY --from=build /usr/src/app/collector/sample.json ./config.json
 ENTRYPOINT ["./collector"]

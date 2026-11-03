@@ -1,5 +1,5 @@
 # Build
-FROM golang:1.23.6-alpine3.21 AS build
+FROM golang:1.26 AS build
 WORKDIR /usr/src/app
 COPY go.mod go.sum ./
 RUN go install github.com/a-h/templ/cmd/templ@latest

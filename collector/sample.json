@@ -1,0 +1,6 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Gabryjiel/solar-system/refs/heads/master/collector/schema.json",
+  "db_url": "./collector.db",
+  "frequency": 5,
+  "devices": []
+}

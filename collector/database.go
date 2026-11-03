@@ -8,7 +8,7 @@ import (
 )
 
 func getDBClient(config Config) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", config.DBUrl)
+	db, err := sql.Open("sqlite", config.DBUrl)
 	if err != nil {
 		return nil, err
 	}

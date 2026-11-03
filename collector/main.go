@@ -6,11 +6,15 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
 	config := LoadConfig("./config.json")
+
+	if len(config.Devices) == 0 {
+		log.Fatalf("No devices in config")
+	}
 
 	db, err := getDBClient(config)
 	if err != nil {
