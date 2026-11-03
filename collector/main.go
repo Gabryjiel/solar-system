@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	config := LoadConfig("./config.json")
+	config := LoadConfig("./data/config.json")
 
 	if len(config.Devices) == 0 {
 		log.Fatalf("No devices in config")

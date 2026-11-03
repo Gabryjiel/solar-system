@@ -15,5 +15,5 @@ FROM scratch
 WORKDIR /app
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /usr/src/app/bin/collector ./collector
-COPY --from=build /usr/src/app/collector/sample.json ./config.json
+COPY --from=build /usr/src/app/collector/sample.json ./data/config.json
 ENTRYPOINT ["./collector"]
